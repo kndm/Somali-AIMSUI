@@ -1,0 +1,97 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Contact us</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-12 col-md-10 col-lg-10 mx-auto">
+        <div class="card card-signin my-5 margin-top-10">
+          <div class="card-body">
+            <div *ngIf="isError" class="alert alert-danger alert-dismissible">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              <strong>Error!</strong> {{errorMessage}}
+            </div>
+            <span class="text-center"><h5>Contact form</h5></span>
+            <div *ngIf="isShowSuccessMessage" class="alert alert-info alert-dismissible">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              <strong>Information!</strong> {{successMessage}}
+            </div>
+            <form class="form-signin" (ngSubmit)="contactForm.form.valid && sendEmailRequest(contactForm)"
+              #contactForm="ngForm">
+
+              <div *ngIf="!isLoggedIn" class="form-group">
+                <label for="senderEmail">Your email</label>
+                <input type="email" class="form-control" id="senderEmail" [(ngModel)]="model.senderEmail" name="senderEmail"
+                  #senderEmail="ngModel" maxlength="255" required />
+                <div *ngIf="contactForm.submitted" [hidden]="senderEmail.valid" class="alert alert-danger">
+                  Email is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="senderName">Your name</label>
+                <input type="text" class="form-control" id="senderName" [(ngModel)]="model.senderName" name="senderName"
+                  #senderName="ngModel" maxlength="30" required />
+                <div *ngIf="contactForm.submitted" [hidden]="senderName.valid" class="alert alert-danger">
+                  Name is required
+                </div>
+              </div>
+
+              <div  class="form-group">
+                <label for="messageType">Message type</label>
+                <select class="form-control" id="messageType" [(ngModel)]="model.emailType" name="messageType"
+                    #messageType="ngModel" required>
+                    <option value="null">--Select one--</option>
+                    <option *ngFor="let e of emailTypes" value="{{e.val}}">
+                      {{e.text}}
+                    </option>
+                  </select>
+                  <div *ngIf="contactForm.submitted" [hidden]="messageType.valid" class="alert alert-danger">
+                    Message type is required
+                  </div>
+              </div>
+
+              <div class="form-group">
+                <label for="emailType">Select project</label>
+                <ng-multiselect-dropdown class="col-sm-9" [placeholder]="'--Type to search a project--'" [settings]="projectsSettings"
+                  [data]="projectsList" [(ngModel)]="model.selectedProject" name="selectedProject"
+                  #selectedProject="ngModel">
+                </ng-multiselect-dropdown>
+                <div *ngIf="contactForm.submitted" [hidden]="model.selectedProject != null" class="alert alert-danger">
+                  Project selection is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="subject">Subject</label>
+                <input type="text" class="form-control" id="subject" [(ngModel)]="model.subject" name="subject"
+                  #subject="ngModel" maxlength="50" required />
+                <div *ngIf="contactForm.submitted" [hidden]="subject.valid" class="alert alert-danger">
+                  Subject is required
+                </div>
+
+                <div class="form-group">
+                  <label>Message <span class="text-info">(Max characters: {{messageLimit}} Left: {{messageLimitLeft}})</span></label>
+                  <textarea rows="5" class="form-control" id="message" (input)="getMessageLimitInfo()" [(ngModel)]="model.message" name="message"
+                    #message="ngModel" maxlength="{{messageLimit}}" required></textarea>
+                  <div *ngIf="contactForm.submitted" [hidden]="message.valid" class="alert alert-danger">
+                    Message is required
+                  </div>
+                </div>
+              </div>
+
+                <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">Send request</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </block-ui>
+</div>
+
+<error-modal message={{errorMessage}}></error-modal>

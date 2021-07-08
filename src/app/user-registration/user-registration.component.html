@@ -4,47 +4,53 @@
           <div class="card card-signin my-5">
             <div class="card-body">
               <h5 class="card-title text-center">Register</h5>
-              <form (ngSubmit)="proceedRegistration()" #registrationForm="ngForm">
-                
+              <form (ngSubmit)="registrationForm.form.valid && proceedRegistration()" #registrationForm="ngForm">
+                <div class="form-group">
+                  <span class="text-info">
+                    Please note that you only need to register if you wish to add and/or edit data on projects. 
+                    To view data on projects you do not need to register here, as all the data is accessible 
+                    via the Reports and Project List menu items.
+                  </span>
+                </div>
                 <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" class="form-control" [class.disable]='disableEmail' id="Email" [(ngModel)]="model.Email" (input)="resetEmailAvailable($event)" [elFocus]="isEmailFocus" name="Email" #Email="ngModel" required email>
-                  <div [hidden]="Email.valid" class="alert alert-danger">
-                    Enter valid email address
+                  <input type="email" class="form-control" [class.disable]='disableEmail' id="email" [(ngModel)]="model.email" (input)="resetEmailAvailable($event)" [elFocus]="isEmailFocus" name="email" #email="ngModel" required>
+                  <div *ngIf="invalidEmail && email.invalid" [hidden]="!email.errors && !email.errors.email" class="alert alert-danger">
+                    Email valid email address
                   </div>
                   <div [hidden]="!emailNotAvailable" class="alert alert-danger">
                     Email Address already taken
                   </div>
-                  <button *ngIf="!isEmailOk" [class.disable]="isSearchingEmail" class="btn btn-sm btn-info btn-block text-uppercase" type="button" (click)="checkIfEmailAvailable()">{{btnCheckEmailTitle}}</button>
+                  <button *ngIf="!isEmailOk" [class.disable]="isSearchingEmail" class="btn btn-sm btn-info btn-block text-uppercase margin-top-5" type="button" (click)="checkIfEmailAvailable()">{{btnCheckEmailTitle}}</button>
                 </div>
                 
                 <div *ngIf="isEmailOk">
-        
+                  <div class="form-group">
+                    <label>Confirm email</label>
+                    <input type="email" [elFocus]="isConfirmEmailFocus" class="form-control" [(ngModel)]="model.confirmEmail" [elFocus]="isEmailFocus" name="confirmEmail" #confirmEmail="ngModel" preventCutCopyPaste required>
+                    <div *ngIf="registrationForm.submitted" [hidden]="confirmEmail.valid && model.email == model.confirmEmail" class="alert alert-danger">
+                      Your emails do not match
+                    </div>
+                  </div>
+
                   <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password" [(ngModel)]="model.Password" required [(ngModel)]="model.Password" name="Password" #Password="ngModel">
-                    <div [hidden]="Password.valid || Password.pristine" class="alert alert-danger">
+                    <input type="password" class="form-control" id="password" [(ngModel)]="model.password"
+                     [(ngModel)]="model.password" name="password" #password="ngModel" required>
+                    <div *ngIf="registrationForm.submitted" [hidden]="password.valid" class="alert alert-danger">
                       Password is required
                     </div>
                   </div>
         
                   <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" class="form-control" id="ConfirmPassword" [(ngModel)]="model.ConfirmPassword" required [(ngModel)]="model.ConfirmPassword" name="ConfirmPassword" #ConfirmPassword="ngModel">
-                    <div [hidden]="model.Password == model.ConfirmPassword || model.ConfirmPassword.length == 0" class="alert alert-danger">
+                    <label for="confirmPassword">Confirm password</label>
+                    <input type="password" class="form-control" id="confirmPassword" 
+                    [(ngModel)]="model.confirmPassword" name="confirmPassword" #confirmPassword="ngModel" required>
+                    <div *ngIf="registrationForm.submitted" [hidden]="model.password == model.confirmPassword" class="alert alert-danger">
                       Passwords do not match
                     </div>
                   </div>
-        
-                  <!--<div class="form-group">
-                    <label for="UserType">User Type</label>
-                    <select class="form-control" id="UserType" required [(ngModel)]="model.UserType" name="UserType" #UserType="ngModel">
-                      <option *ngFor="let uType of userTypes" [value]="uType.id">{{uType.typeName}}</option>
-                    </select>
-                    <div [hidden]="UserType.valid || UserType.pristine" class="alert alert-danger">
-                      Select a user type
-                    </div>
-                  </div>-->
+                  
                   <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">Proceed</button>
                 </div>
                 

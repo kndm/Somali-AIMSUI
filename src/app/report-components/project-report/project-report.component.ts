@@ -1,11 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ReportService } from 'src/app/services/report.service';
+import { ProjectService } from 'src/app/services/project.service';
 import { BlockUI, NgBlockUI } from 'ng-block-ui';
+import { ErrorModalComponent } from 'src/app/error-modal/error-modal.component';
 import { StoreService } from 'src/app/services/store-service';
-import { SectorService } from 'src/app/services/sector.service';
-import { FinancialYearService } from 'src/app/services/financial-year.service';
-import { OrganizationService } from 'src/app/services/organization-service';
-import { LocationService } from 'src/app/services/location.service';
 
 @Component({
   selector: 'app-project-report',
@@ -13,295 +10,118 @@ import { LocationService } from 'src/app/services/location.service';
   styleUrls: ['./project-report.component.css']
 })
 export class ProjectReportComponent implements OnInit {
-  sectorsSettings: any = [];
-  selectedSectors: any = []; 
-  selectedOrganizations: any = [];
-  selectedLocations: any = [];
-  organizationsSettings: any = [];
-  locationsSettings: any = [];
-  yearsList: any = [];
-  sectorsList: any = [];
-  organizationsList: any = [];
-  locationsList: any = [];
-
-  reportDataList: any = [];
-  dropdownSettings: any = {};
-  barChartOptions: any = {
-    scaleShowVerticalLines: false,
-    responsive: true,
-    scales: {
-      yAxes: [{
-        ticks: {
-          beginAtZero: true
-        }
-      }]
-    }
+  projectsList: any = [];
+  filteredProjects: any = [];
+  reportView: string = 'search';
+  btnText: string = 'View report';
+  isLoading: boolean = true;
+  errorMessage: string = null;
+  projectProfile: any = {
+    locations: [],
+    sectors: [],
+    funders: [],
+    implementers: [],
+    documents: [],
+    customFields: []
   };
-  chartColors: any = [
-    {
-      backgroundColor: [
-        "#FF7360", "#6FC8CE", "#4cc6bb", "#fdd100", "#123ea9"
-      ]
-    }
-  ];
-  barChartLabels:string[] = [];
-  barChartType:string = 'bar';
-  barChartLegend:boolean = true;
-  barChartData:any[] = [
-  ];
-  model: any = { title: '', organizationIds: [], startingYear: 0, endingYear: 0, 
-  sectorIds: [], locationIds: [], selectedSectors: [], selectedOrganizations: [],
-  selectedLocations: [], sectorsList: [], locationsList: [], organizationsList: [] };
-  //Overlay UI blocker
+  isAnyFilterSet: boolean = false;
+  model: any = {criteria: null, selectedProjectId: 0, projectTitle: null };
   @BlockUI() blockUI: NgBlockUI;
-
-  constructor(private reportService: ReportService, private storeService: StoreService,
-    private sectorService: SectorService, private fyService: FinancialYearService,
-    private organizationService: OrganizationService, private locationService: LocationService,
-    ) { }
+  
+  constructor(private projectService: ProjectService, private errorModal: ErrorModalComponent,
+    private storeService: StoreService) { }
 
   ngOnInit() {
-    
-    this.getSectorsList();
-    this.getLocationsList();
-    this.getOrganizationsList();
-    this.loadFinancialYears();
-
-    this.sectorsSettings = {
-      singleSelection: false,
-      idField: 'id',
-      textField: 'sectorName',
-      selectAllText: 'Select All',
-      unSelectAllText: 'UnSelect All',
-      itemsShowLimit: 5,
-      allowSearchFilter: true
-    };
-
-    this.organizationsSettings = {
-      singleSelection: false,
-      idField: 'id',
-      textField: 'organizationName',
-      selectAllText: 'Select All',
-      unSelectAllText: 'UnSelect All',
-      itemsShowLimit: 5,
-      allowSearchFilter: true
-    };
-
-    this.locationsSettings = {
-      singleSelection: false,
-      idField: 'id',
-      textField: 'location',
-      selectAllText: 'Select All',
-      unSelectAllText: 'UnSelect All',
-      itemsShowLimit: 5,
-      allowSearchFilter: true
-    };
+    this.getProjects();
   }
 
-  /*getSectorProjectsReport() {
-    this.barChartLabels = [];
-    this.barChartData = [];
-    this.blockUI.start('Wait loading...');
-    this.reportService.getSectorProjectsReport(this.selectedSectors, this.reportModel.year).subscribe(
+  getProjects() {
+    this.projectService.getProjectsList().subscribe(
       data => {
-        this.reportDataList = data;
-        if (this.reportDataList && this.reportDataList.sectorProjectsList) {
-          var sectorNames = this.reportDataList.sectorProjectsList.map(p => p.sectorName);
-          var sectorProjects = this.reportDataList.sectorProjectsList.map(p => p.projects.length);
-          var chartData = {data: sectorProjects, label: 'Sector Projects'};
-          this.barChartData.push(chartData);
-          this.barChartLabels = sectorNames;
+        if (data) {
+          this.projectsList = data;
+          this.filteredProjects = data;
         }
-        this.blockUI.stop();
-      },
-      error => {
-        console.log(error);
-        this.blockUI.stop();
-      }
-    );
-  }*/
-
-  searchProjectsByCriteriaReport() {
-    this.barChartLabels = [];
-    this.barChartData = [];
-    var searchModel = {
-      title: this.model.title,
-      startingYear: this.model.startingYear,
-      endingYear: this.model.endingYear,
-      organizationIds: this.selectedOrganizations,
-      sectorIds: this.selectedSectors,
-      locationIds: this.selectedLocations
-    };    
-
-    this.blockUI.start('Searching Projects...');
-    this.reportService.searchProjectsByCriteriaReport(searchModel).subscribe(
-      data => {
-        this.reportDataList = data;
-        if (this.reportDataList && this.reportDataList.sectorProjectsList) {
-          var sectorNames = this.reportDataList.sectorProjectsList.map(p => p.sectorName);
-          var sectorProjects = this.reportDataList.sectorProjectsList.map(p => p.projects.length);
-          var chartData = {data: sectorProjects, label: 'Sector Projects'};
-          this.barChartData.push(chartData);
-          this.barChartLabels = sectorNames;
-        }
-        this.blockUI.stop();
-      },
-      error => {
-        console.log(error);
-        this.blockUI.stop();
+        this.isLoading = false;
       }
     )
   }
 
-  formatFunders(funders: any = null) {
-    var fundersStr = '';
-    if (funders && funders.length > 0) {
-      var funderNames = funders.map(f => f.funder);
-      fundersStr = funderNames.join(', ');
+  filterProjects() {
+    var criteria = this.model.projectTitle;
+    if (!criteria) {
+      this.filteredProjects = this.projectsList;
+    } else {
+      criteria = criteria.toLowerCase();
+      this.filteredProjects = this.projectsList.filter(p => p.title.toLowerCase().indexOf(criteria) != -1);
     }
-    return fundersStr;
   }
 
-  formatImplementers(implementers: any = null) {
-    var implementersStr = '';
-    if (implementers && implementers.length > 0) {
-      var implementerNames = implementers.map(i => i.implementer);
-      implementersStr = implementerNames.join(', ');
+  selectProject(e) {
+    var id = e.currentTarget.id.split('-')[1];
+    if (id) {
+      var selectedProject = this.projectsList.filter(p => p.id == id);
+      if (selectedProject.length > 0) {
+        this.model.selectedProjectId = id;
+        this.model.projectTitle = selectedProject[0].title; 
+      }
     }
-    return implementersStr;
   }
 
-  /*loadSectors() {
-    this.sectorService.getSectorsList().subscribe(
-      data => {
-        this.model.sectorsList = data;
-        console.log(this.sectorsList);
-      },
-      error => {
-        console.log(error);
-      }
-    )
-  }*/
+  viewProjectProfileReport() {
+    if (this.model.selectedProjectId) {
+      this.blockUI.start('Loading report');
+      
+      this.projectService.getProjectProfileReport(this.model.selectedProjectId).subscribe(
+        data => {
+          if (data) {
+            if (data.projectProfile) {
+              this.projectProfile = data.projectProfile;
+            }
+          }
+          this.reportView = 'report';
+          this.blockUI.stop();
+        }
+      );
+    } 
+  }
 
-  loadFinancialYears() {
-    this.fyService.getYearsList().subscribe(
-      data => {
-        this.yearsList = data;
-      },
-      error => {
-        console.log(error);
+  reset() {
+    this.model.selectedProjectId = 0;
+    this.model.projectTitle = null;
+  }
+
+  onChangeStartYear() {
+    this.manageResetDisplay();
+  }
+
+  onChangeEndYear() {
+    this.manageResetDisplay();
+  }
+
+  manageResetDisplay() {
+    if (this.model.startingYear == 0 && this.model.endingYear == 0) {
+        this.isAnyFilterSet = false;
+      } else {
+        this.isAnyFilterSet = true;
       }
-    );
+  }
+
+  setFilter() {
+    this.isAnyFilterSet = true;
+  }
+
+  resetFilters() {
+    this.model.startingYear = 0;
+    this.model.endingYear = 0;
+  }
+
+  displayFieldValues(json: any) {
+    return this.storeService.parseAndDisplayJsonAsString(json);
   }
 
   printReport() {
-    this.storeService.printReport('rpt-sector-project', 'SectorWise Projects List');
-  }
-
-  public chartClicked(e:any):void {
-  }
- 
-  public chartHovered(e:any):void {
-  }
-
-  getSectorsList() {
-    this.sectorService.getSectorsList().subscribe(
-      data => {
-        this.sectorsList = data;
-      },
-      error => {
-        console.log(error);
-      }
-    )
-  }
-
-  getLocationsList() {
-    this.locationService.getLocationsList().subscribe(
-      data => {
-        this.locationsList = data;
-      },
-      error => {
-        console.log(error);
-      }
-    )
-  }
-
-  getOrganizationsList() {
-    this.organizationService.getOrganizationsList().subscribe(
-      data => {
-        this.organizationsList = data;
-      },
-      error => {
-        console.log(error);
-      }
-    )
-  }
-
-  onSectorSelect(item: any) {
-    var id = item.id;
-    if (this.selectedSectors.indexOf(id) == -1) {
-      this.selectedSectors.push(id);
-    }
-  }
-
-  onSectorDeSelect(item: any) {
-    var id = item.id;
-    var index = this.selectedSectors.indexOf(id);
-    this.selectedSectors.splice(index, 1);
-  }
-
-  onSectorSelectAll(items: any) {
-    items.forEach(function (item) {
-      var id = item.id;
-      if (this.selectedSectors.indexOf(id) == -1) {
-        this.selectedSectors.push(id);
-      }
-    }.bind(this))
-  }
-
-  onOrganizationSelect(item: any) {
-    var id = item.id;
-    if (this.selectedOrganizations.indexOf(id) == -1) {
-      this.selectedOrganizations.push(id);
-    }
-  }
-
-  onOrganizationDeSelect(item: any) {
-    var id = item.id;
-    var index = this.selectedOrganizations.indexOf(id);
-    this.selectedOrganizations.splice(index, 1);
-  }
-
-  onOrganizationSelectAll(items: any) {
-    items.forEach(function (item) {
-      var id = item.id;
-      if (this.selectedOrganizations.indexOf(id) == -1) {
-        this.selectedOrganizations.push(id);
-      }
-    }.bind(this));
-  }
-
-  onLocationSelect(item: any) {
-    var id = item.id;
-    if (this.selectedLocations.indexOf(id) == -1) {
-      this.selectedLocations.push(id);
-    }
-  }
-
-  onLocationDeSelect(item: any) {
-    var id = item.id;
-    var index = this.selectedLocations.indexOf(id);
-    this.selectedLocations.splice(index, 1);
-  }
-
-  onLocationSelectAll(items: any) {
-    items.forEach(function (item) {
-      var id = item.id;
-      if (this.selectedLocations.indexOf(id) == -1) {
-        this.selectedLocations.push(id);
-      }
-    }.bind(this));
+    this.storeService.printSimpleReport('rpt-project-report', 'Project profile report');
   }
 
 }
- 

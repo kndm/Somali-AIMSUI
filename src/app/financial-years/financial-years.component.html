@@ -1,0 +1,46 @@
+<div class="container-fluid view-area">
+  
+  <div class="row">
+    <div class="col-md-6">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active btn-info" data-toggle="tab" >Financial years list</a>
+        </li>
+        <li *ngIf="permissions.canEditYear" class="nav-item">
+          <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/manage-year']">Create new</a>
+        </li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <div class="input-group mb-3">
+        <input type="number" pattern="/^-?\d+\.?\d*$/" onKeyPress="if(this.value.length==4) return false;"  class="form-control" placeholder="Enter financial year to search" [(ngModel)]="criteria"
+          aria-describedby="basic-addon2" (input)="searchFinancialYears()" maxlength="4">
+        <div class="input-group-append">
+          <button class="btn btn-outline-info" (click)="searchFinancialYears()" type="button"><i class="fa fa-search"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row text-center" *ngIf="isLoading">
+    <div class="col-md-12">
+      <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading...</span>
+    </div>
+  </div>
+  
+  <div *ngIf="!isLoading" class="row">
+    <div class="col margin-top-10">
+      <table class="table table-bordered table-stripped">
+        <tr>
+          <!--<th>Calendar year</th>-->
+          <th>Financial year</th>
+        </tr>
+        <tr *ngFor="let year of filteredYearsList | paginate: { itemsPerPage: pagingSize, currentPage: p }">
+          <!--<td>{{year.financialYear}}</td>-->
+          <td>{{year.label}}</td>
+        </tr>
+      </table>
+      <pagination-controls (pageChange)="p=$event"></pagination-controls>
+    </div>
+  </div>
+  </div>

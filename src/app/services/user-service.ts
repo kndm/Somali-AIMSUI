@@ -30,10 +30,38 @@ export class UserService {
                 catchError(this.storeService.handleError<any>('Authentication')));
     }
 
+    getUsersCount() {
+        var url = this.urlHelper.getUsersCountUrl();
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Users Count'))
+        );
+    }
+
+    getUsersList() {
+        var url = this.urlHelper.getUsersUrl();
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Users list'))
+        );
+    }
+
+    promoteUser(id: string) {
+        var url = this.urlHelper.getPromoteUserUrl(id);
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Promote user'))
+        );
+    }
+
+    demoteUser(id: string) {
+        var url = this.urlHelper.getDemoteUserUrl(id);
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Demote user'))
+        );
+    }
+
     checkEmailAvailability(email: string) {
         var url = this.urlHelper.emailAvailabilityUrl(email);
-        return this.httpClient
-            .get<boolean>(url);
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Email availability')));
     }
 
     editUserPassword(password: string) {
@@ -70,6 +98,31 @@ export class UserService {
         var url = this.urlHelper.userRegistrationUrl();
         return this.httpClient.post(url,
             JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('User registration')));
+                catchError(this.storeService.handleError<any>('User Registration')));
+    }
+
+    getUserSubscriptions() {
+        var url = this.urlHelper.getUserSubscriptionsUrl();
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('User Subscription')));
+    }
+
+    getManagerUsers() {
+        var url = this.urlHelper.getManagerUsersUrl();
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Manager Users')));
+    }
+
+    getStandardUsers() {
+        var url = this.urlHelper.getStandardUsersUrl();
+        return this.httpClient.get(url, httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Standard Users')));
+    }
+
+    saveReportSubscriptions(model:any) {
+        var url = this.urlHelper.getSubscribeToReportsUrl();
+        return this.httpClient.post(url, 
+            JSON.stringify(model), httpOptions).pipe(
+                catchError(this.storeService.handleError<any>('Report Subscriptions')));
     }
 }

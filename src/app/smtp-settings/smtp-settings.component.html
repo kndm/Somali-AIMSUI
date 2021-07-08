@@ -22,43 +22,52 @@
             <form class="form-signin" (ngSubmit)="smtpForm.form.valid && saveSMTPSettings()" #smtpForm="ngForm">
 
               <div class="form-group">
-                <label for="host">SMTP Host</label>
+                <label for="host">SMTP host</label>
                 <input type="url" class="form-control" id="host" [(ngModel)]="model.host" name="host"
                   #host="ngModel" maxlength="50" required>
-                <div [hidden]="host.valid" class="alert alert-danger">
+                <div *ngIf="smtpForm.submitted" [hidden]="host.valid" class="alert alert-danger">
                   Host is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="port">Port</label>
+                <label for="port">SMTP port</label>
                 <input pattern="\d*" maxlength="3" class="form-control" id="port" [(ngModel)]="model.port"
                   name="port" #port="ngModel" required>
-                <div [hidden]="port.valid" class="alert alert-danger">
+                <div *ngIf="smtpForm.submitted" [hidden]="port.valid" class="alert alert-danger">
                   Port is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="email">Admin Email</label>
+                <label for="email">Sender email address</label>
                 <input type="email" maxlength="255" class="form-control" id="adminEmail" [(ngModel)]="model.adminEmail"
                   name="adminEmail" #adminEmail="ngModel" required>
-                <div [hidden]="adminEmail.valid" class="alert alert-danger">
+                <div *ngIf="smtpForm.submitted" [hidden]="adminEmail.valid" class="alert alert-danger">
                   Admin Email is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="username">Username</label>
+                <label for="email">Sender name</label>
+                <input type="email" maxlength="255" class="form-control" id="senderName" [(ngModel)]="model.senderName"
+                  name="senderName" #senderName="ngModel" required>
+                <div *ngIf="smtpForm.submitted" [hidden]="senderName.valid" class="alert alert-danger">
+                  Sender name is required
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="username">SMTP username</label>
                 <input type="text" maxlength="255" class="form-control" id="username" [(ngModel)]="model.username"
                   name="username" #username="ngModel" required>
-                <div [hidden]="username.valid" class="alert alert-danger">
+                <div *ngIf="smtpForm.submitted" [hidden]="username.valid" class="alert alert-danger">
                   Username is required
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">SMTP password</label>
                 <input type="password" maxlength="50" class="form-control" id="password" [(ngModel)]="model.password"
                   name="password" #password="ngModel"> <small class="text-info"><i>(Leave blank if you do not want to change)</i></small>
               </div>

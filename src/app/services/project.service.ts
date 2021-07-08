@@ -11,186 +11,353 @@ import { httpOptions } from '../config/httpoptions';
 
 export class ProjectService {
 
-  constructor(private httpClient: HttpClient, private urlHelper: UrlHelperService, 
+  constructor(private httpClient: HttpClient, private urlHelper: UrlHelperService,
     private storeService: StoreService) { }
 
 
-    getProjectsList() {
-      var url = this.urlHelper.getProjectUrl();
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Projects')));
-    }
+  getProjectsList() {
+    var url = this.urlHelper.getProjectUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Projects')));
+  }
 
-    filterProjects(criteria: string) {
-      var url = this.urlHelper.getSearchProjectsUrl(criteria);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Projects')));
-    }
+  getLatestProjects() {
+    var url = this.urlHelper.getLatestProjectsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Latest Projects')));
+  }
 
-    getProject(id: string) {
-      var url = this.urlHelper.getSingleProjectUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project')));
-    }
+  getProjectsWithDetail() {
+    var url = this.urlHelper.getProjectsWithDetail();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Projects Detail'))
+    );
+  }
 
-    getProjectProfileReport(id: string) {
-      var url = this.urlHelper.getProjectProfileReport(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Profile')));
-    }
+  filterProjects(criteria: string) {
+    var url = this.urlHelper.getSearchProjectsUrl(criteria);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Projects')));
+  }
 
-    getProjectTitle(id: string) {
-      var url = this.urlHelper.getProjectTitle(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project title')));
-    }
+  getProject(id: string) {
+    var url = this.urlHelper.getSingleProjectUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project')));
+  }
 
-    addProject(model: any) {
-      var url  = this.urlHelper.getProjectUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project')));
-    }
+  getProjectProfileReport(id: string) {
+    var url = this.urlHelper.getProjectProfileReport(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Profile')));
+  }
 
-    searchProjectsViewByCriteria(model: any) {
-      var url  = this.urlHelper.getSearchProjectsViewUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Search Projects')));
-    }
+  getUserMembershipProjects() {
+    var url = this.urlHelper.getUserApprovedRequestsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('User Approved Requests')));
+  }
 
-    updateProject(id: number, model: any) {
-      var url  = this.urlHelper.getProjectUrl() + '/' + id;
-        return this.httpClient.put(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Update Project')));
-    }
+  getUserProjects() {
+    var url = this.urlHelper.getUserProjectsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('User Projects')));
+  }
 
-    //Project locations functions
-    addProjectLocation(model: any) {
-      var url  = this.urlHelper.addProjectLocationUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Location')));
-    }
+  getProjectTitle(id: string) {
+    var url = this.urlHelper.getProjectTitle(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project title')));
+  }
 
-    deleteProjectLocation(projectId: string, locationId: string) {
-      var url  = this.urlHelper.deleteProjectLocationUrl(projectId, locationId);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Location')));
-    }
+  getProjectsCount() {
+    var url = this.urlHelper.getProjectsCountUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Projects Count'))
+    );
+  }
 
-    getProjectLocations(id: string) {
-      var url = this.urlHelper.getProjectLocationsUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Locations')));
-    }
+  addProject(model: any) {
+    var url = this.urlHelper.getProjectUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project')));
+  }
 
-    //Project sector functions
-    addProjectSector(model: any) {
-      var url  = this.urlHelper.addProjectSectorUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Sector')));
-    }
 
-    getProjectSectors(id: string) {
-      var url = this.urlHelper.getProjectSectorsUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Sectors')));
-    }
+  applyForProjectMembership(model: any) {
+    var url = this.urlHelper.applyForProjectMembershipUrl();
+    return this.httpClient.post(url, model, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Membership')));
+  }
 
-    deleteProjectSector(projectId: string, sectorId: string) {
-      var url  = this.urlHelper.deleteProjectSectorUrl(projectId, sectorId);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Sector')));
-    }
+  getProjectMembershipRequests() {
+    var url = this.urlHelper.getProjectMembershipUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Membership Requests')));
+  }
 
-    //Project funder functions
-    addProjectFunder(model: any) {
-      var url  = this.urlHelper.addProjectFunderUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Funder')));
-    }
+  mergeProjects(model: any) {
+    var url = this.urlHelper.getMergeProjectsUrl();
+    return this.httpClient.post(url, JSON.stringify(model), httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Merge Projects'))
+    );
+  }
 
-    getProjectFunders(id: string) {
-      var url = this.urlHelper.getProjectFundersUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Sectors')));
-    }
+  approveProjectMembership(model: any) {
+    var url = this.urlHelper.approveProjectMembershipUrl();
+    return this.httpClient.post(url, JSON.stringify(model), httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Approve Project Membership')));
+  }
 
-    deleteProjectFunder(projectId: string, funderId: string) {
-      var url  = this.urlHelper.deleteProjectFunderUrl(projectId, funderId);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Funder')));
-    }
+  unApproveProjectMembership(model: any) {
+    var url = this.urlHelper.unApproveProjectMembershipUrl();
+    return this.httpClient.post(url, JSON.stringify(model), httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Approve Project Membership')));
+  }
 
-    //Project implementer functions
-    addProjectImplementer(model: any) {
-      var url  = this.urlHelper.addProjectImplementerUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Implementer')));
-    }
+  searchProjectsViewByCriteria(model: any) {
+    var url = this.urlHelper.getSearchProjectsViewUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Search Projects')));
+  }
 
-    getProjectImplementers(id: string) {
-      var url = this.urlHelper.getProjectImplementersUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Implementers')));
-    }
+  updateProject(id: number, model: any) {
+    var url = this.urlHelper.getProjectUrl() + '/' + id;
+    return this.httpClient.put(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Update Project')));
+  }
 
-    deleteProjectImplementer(projectId: string, implementerId: string) {
-      var url  = this.urlHelper.deleteProjectImplementerUrl(projectId, implementerId);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Implementer')));
-    }
+  //Project locations functions
+  addProjectLocation(model: any) {
+    var url = this.urlHelper.addProjectLocationUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Location')));
+  }
 
-    //Project disbursements functions
-    addProjectDisbursement(model: any) {
-      var url  = this.urlHelper.addProjectDisbursementUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Disbursement')));
-    }
+  deleteProjectLocation(projectId: string, locationId: string) {
+    var url = this.urlHelper.deleteProjectLocationUrl(projectId, locationId);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Location')));
+  }
 
-    getProjectDisbursements(id: string) {
-      var url = this.urlHelper.getProjectDisbursementsUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Disbursements')));
-    }
+  getProjectLocations(id: string) {
+    var url = this.urlHelper.getProjectLocationsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Locations')));
+  }
 
-    deleteProjectDisbursement(projectId: string, startingYear: string, startingMonth: string) {
-      var url  = this.urlHelper.deleteProjectDisbursementUrl(projectId, startingYear, startingMonth);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Disbursement')));
-    }
+  //Project sector functions
+  addProjectSector(model: any) {
+    var url = this.urlHelper.addProjectSectorUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Sector')));
+  }
 
-    //Project documents functions
-    addProjectDocument(model: any) {
-      var url  = this.urlHelper.addProjectDocumentUrl();
-        return this.httpClient.post(url,
-            JSON.stringify(model), httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('New Project Document')));
-    }
+  getProjectSectors(id: string) {
+    var url = this.urlHelper.getProjectSectorsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Sectors')));
+  }
 
-    getProjectDocuments(id: string) {
-      var url = this.urlHelper.getProjectDocumentsUrl(id);
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('Project Documents')));
-    }
+  deleteProjectSector(projectId: string, sectorId: string) {
+    var url = this.urlHelper.deleteProjectSectorUrl(projectId, sectorId);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Sector')));
+  }
 
-    deleteProjectDocument(id: string) {
-      var url  = this.urlHelper.deleteProjectDocumentUrl(id);
-        return this.httpClient.delete(url, httpOptions).pipe(
-                catchError(this.storeService.handleError<any>('Delete Project Document')));
-    }
+  getDeleteProjectIds() {
+    var url = this.urlHelper.getDeleteProjectIdsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Ids'))
+    );
+  }
 
-    extractProjectsByIds(model: any) {
-      var url = this.urlHelper.extractAIMSProjectsByIds();
-      return this.httpClient.post(url,
-        JSON.stringify(model), httpOptions).pipe(
-            catchError(this.storeService.handleError<any>('Projects By Ids')));
-    }
+  getProjectTitles() {
+    var url = this.urlHelper.getProjectTitlesUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project titles'))
+    );
+  }
+
+  makeProjectDeletionRequest(model: any) {
+    var url = this.urlHelper.getProjectDeletionRequestUrl();
+    return this.httpClient.post(url, model, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Deletion Request'))
+    );
+  }
+
+  getProjectDeletionActiveRequests() {
+    var url = this.urlHelper.getProjectDeletionActiveRequestsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Deletion Active Requests'))
+    );
+  }
+
+  approveProjectDeletion(id: string) {
+    var url = this.urlHelper.getProjectDeletionApprovalUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Deletion Request Approval'))
+    );
+  }
+
+  cancelProjectDeletion(id: string) {
+    var url = this.urlHelper.getProjectDeletionCancelUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Deletion Request Cancellation'))
+    );
+  }
+
+  deleteProject(id: string) {
+    var url = this.urlHelper.getProjectDeletionRequestUrl() + '/' + id;
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Deletion'))
+    );
+  }
+
+  //Project funder functions
+  addProjectFunder(model: any) {
+    var url = this.urlHelper.addProjectFunderUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Funder')));
+  }
+
+  addProjectFunderFromSource(model: any) {
+    var url = this.urlHelper.addProjectFunderFromSourceUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Funder from Source')));
+  }
+
+  addProjectImplementerFromSource(model: any) {
+    var url = this.urlHelper.addProjectImplementerFromSourceUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Implementer from Source')));
+  }
+
+  getProjectFunders(id: string) {
+    var url = this.urlHelper.getProjectFundersUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Sectors')));
+  }
+
+  getProjectReport(id: string) {
+    var url = this.urlHelper.getProjectReportUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Report')));
+  }
+
+  deleteProjectFunder(projectId: string, funderId: string) {
+    var url = this.urlHelper.deleteProjectFunderUrl(projectId, funderId);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Funder')));
+  }
+
+  //Project implementer functions
+  addProjectImplementer(model: any) {
+    var url = this.urlHelper.addProjectImplementerUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Implementer')));
+  }
+
+  getProjectImplementers(id: string) {
+    var url = this.urlHelper.getProjectImplementersUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Implementers')));
+  }
+
+  deleteProjectImplementer(projectId: string, implementerId: string) {
+    var url = this.urlHelper.deleteProjectImplementerUrl(projectId, implementerId);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Implementer')));
+  }
+
+  //Project disbursements functions
+  addProjectDisbursement(model: any) {
+    var url = this.urlHelper.addProjectDisbursementUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Disbursement')));
+  }
+
+  getProjectDisbursements(id: string) {
+    var url = this.urlHelper.getProjectDisbursementsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Disbursements')));
+  }
+
+  createProjectDisbursements(id: string) {
+    var url = this.urlHelper.getCreateProjectDisbursementsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Create Project Disbursements')));
+  }
+
+  adjustProjectDisbursements(id: string) {
+    var url = this.urlHelper.getAdjustProjectDisbursementsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Adjust Project Disbursements')));
+  }
+
+  deleteProjectDisbursement(id: string) {
+    var url = this.urlHelper.deleteProjectDisbursementUrl(id);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Disbursement')));
+  }
+
+  //Project documents functions
+  addProjectDocument(model: any) {
+    var url = this.urlHelper.addProjectDocumentUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('New Project Document')));
+  }
+
+  getProjectDocuments(id: string) {
+    var url = this.urlHelper.getProjectDocumentsUrl(id);
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Project Documents')));
+  }
+
+  deleteProjectDocument(id: string) {
+    var url = this.urlHelper.deleteProjectDocumentUrl(id);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Document')));
+  }
+
+  //Project custom fields functions
+  saveProjectMarker(model: any) {
+    var url = this.urlHelper.addProjectMarkerUrl();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Save Project Custom Field')));
+  }
+
+  deleteProjectMarker(projectId: string, customFieldId: string) {
+    var url = this.urlHelper.getDeleteProjectMarkerUrl(projectId, customFieldId);
+    return this.httpClient.delete(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Delete Project Field')));
+  }
+
+  //project functions
+  extractProjectsByIds(model: any) {
+    var url = this.urlHelper.extractAIMSProjectsByIds();
+    return this.httpClient.post(url,
+      JSON.stringify(model), httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Projects By Ids')));
+  }
+
+  getCurrentYearsDisbursements() {
+    var url = this.urlHelper.getCurrentYearDisbursementsUrl();
+    return this.httpClient.get(url, httpOptions).pipe(
+      catchError(this.storeService.handleError<any>('Current Year Disbursements'))
+    );
+  }
 
 }

@@ -1,0 +1,204 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Budget report</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <form class="form-signin" (ngSubmit)="getBudgetReport()" #searchForm="ngForm">
+
+              <div class="row margin-top-10">
+                <div class="col-md-6 form-inline">
+                  <label>Currency: </label>&nbsp;&nbsp;
+                  <select [class.disable]="manualExRate == 0" title="Currency for reporting" class="form-control" (change)="selectCurrency()"
+                    id="selectedCurrency" [(ngModel)]="model.selectedCurrency" name="selectedCurrency"
+                    #selectedCurrency="ngModel">
+                    <option *ngFor="let currency of currenciesList" value="{{currency.currency}}">
+                      {{currency.currencyName}}
+                    </option>
+                  </select>&nbsp;
+                  <span *ngIf="manualExRate > 0 && model.selectedCurrency == nationalCurrencyName" class="text-warning">
+                    <b><i>Exchange rate: 1 {{defaultCurrency}} = {{manualExRate}} {{nationalCurrencyName}} on
+                        {{datedToday}}</i></b>
+                  </span>
+
+                  <span *ngIf="manualExRate == 0 && !isDataLoading" class="text-danger">
+                    <i>No exchange rate available, contact Administrator.</i>
+                  </span>
+                </div>
+                <div class="col-md-6">
+                  <span [class.disable]="!defaultCurrency" class="float-right">
+                    <button type="submit" class="btn btn-info margin-top-2">{{btnReportText}}</button>&nbsp;
+                    <button *ngIf="reportDataList && reportDataList.reportSettings" type="button" class="btn btn-danger margin-top-2"
+                      (click)="generatePDF()">Download PDF</button>&nbsp;
+                    <a *ngIf="excelFile" href="{{excelFile}}" class="btn btn-success margin-top-2">Download spreadsheet</a>&nbsp;
+                    <button *ngIf="reportDataList && reportDataList.projects" type="button" class="btn btn-warning margin-top-2"
+                      (click)="printReport()">Print report</button>
+                  </span>
+                </div>
+                <div *ngIf="!defaultCurrency && !isDataLoading" class="col-md-12">
+                  <span class="text-danger">
+                    Default currency is not set and it may produce errors on reports.
+                    Please contact administrator.
+                  </span>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="rpt-budget-report">
+        <div id="rpt-heading" *ngIf="reportDataList && reportDataList.reportSettings" class="col-md-12 text-center margin-top-10">
+          <h5>Budget report <small>(Currency: {{this.selectedCurrencyName}})</small></h5>
+        </div>
+
+      <div *ngIf="reportDataList && reportDataList.reportSettings && chartData.length > 0" class="col-md-12 margin-top-10">
+        <div class="offset-2 col-md-8">
+          <canvas id="chart" baseChart [datasets]="chartData" [labels]="chartLabels" [options]="chartOptions"
+            [legend]="chartLegend" [chartType]="chartType" (chartHover)="chartHovered($event)"
+            (chartClick)="chartClicked($event)"></canvas>
+        </div>
+      </div>
+  
+      <div class="col margin-top-20" id="rpt-budget-report">
+        <div class="col-md-12 margin-top-10">
+          <div *ngIf="reportDataList && reportDataList.projects && chartLabels.length > 0" class="margin-bottom-none">
+            <table class="table table-striped small margin-bottom-none">
+              <thead>
+                <th width="25%">&nbsp;</th>
+                <th width="15%">&nbsp;</th>
+                <th class="text-right" width="12%" *ngFor="let label of chartLabels">
+                  {{label}}
+                </th>
+              </thead>
+              <tbody>
+            </table>
+            
+            <table class="table small margin-bottom-none" *ngFor="let project of reportDataList.projects">
+              <tbody>
+                  <tr class="row-highlight" title="Click here to view detail" (click)="displayHideRow(project.id)">
+                    <td width="25%">
+                      <span *ngIf="!project.isDisplay"><i class="fa fa-plus-square"></i></span> 
+                      <span *ngIf="project.isDisplay"><i class="fa fa-minus-square"></i></span> 
+                      {{project.title}}
+                    </td>
+                    <td width="15%">Disbursements</td>
+                    <td class="text-right" width="12%" *ngFor="let d of project.yearlyDisbursements">
+                      {{formatNumber(d.disbursements)}}
+                    </td>
+                  </tr>
+                  <tr class="child" *ngIf="project.isDisplay">
+                    <td>&nbsp;</td>
+                    <td><i>Actual</i></td>
+                    <td class="text-right" width="12%" *ngFor="let d of project.disbursementsBreakup">
+                        {{formatNumber(d.actualDisbursements)}}
+                      </td>
+                  </tr>
+                  <tr class="child" *ngIf="project.isDisplay">
+                      <td>&nbsp;</td>
+                      <td><i>Planned</i></td>
+                      <td class="text-right" width="12%" *ngFor="let d of project.disbursementsBreakup">
+                          {{formatNumber(d.expectedDisbursements)}}
+                        </td>
+                    </tr>
+              </tbody>
+            </table>
+  
+            <table class="table table-striped small">
+              <tbody>
+                <tr>
+                  <td width="25%"><b>Total</b></td>
+                  <td width="15%"><b>Actual disbursements</b></td>
+                  <td class="text-right" width="12%" *ngFor="let d of reportDataList.totalYearlyDisbursements">
+                    {{formatNumber(d.totalDisbursements)}}
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td><b>Planned disbursements</b></td>
+                  <td class="text-right" *ngFor="let d of reportDataList.totalYearlyDisbursements">
+                    {{formatNumber(d.totalExpectedDisbursements)}}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+  
+          </div>
+  
+          <div class="col-md-12" *ngIf="reportDataList && reportDataList.projects && reportDataList.projects == 0">
+            <span class="text-info"><i>No budget data avaialable to show</i></span>
+          </div>
+  
+        </div>
+      </div>
+
+      <div class="col-md-12 small">
+        <div *ngIf="reportDataList && reportDataList.reportSettings" class="text-center margin-top-20 text-info">
+          Report link: <a class="text-info" href="{{reportDataList.reportSettings.reportUrl}}">{{reportDataList.reportSettings.reportUrl}}</a>
+        </div>
+        <div class="text-center margin-top-5">
+          <span><i>Generated on: {{getTodaysDate()}}</i></span>
+        </div>
+      </div>
+      
+    </div>
+    
+
+  </block-ui>
+</div>
+
+<jw-modal id="disbursement-info-modal">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-info text-white">Disbursements details for {{selectedProject}}</div>
+        <div class="card-body text-info">
+          <table *ngIf="selectedYearlyDisbursements.length > 0" class="table table-striped">
+            <tr>
+              <th width="20%">&nbsp;</th>
+              <th class="text-center" width="16%" *ngFor="let y of selectedYearlyDisbursements">
+                {{y.year}}
+              </th>
+            </tr>
+            <tr>
+              <td>Actual disbursements</td>
+              <td class="text-center" *ngFor="let d of selectedYearlyDisbursements">
+                {{formatNumber(d.actualDisbursements)}}
+              </td>
+            </tr>
+            <tr>
+              <td>Planned disbursements</td>
+              <td class="text-center" *ngFor="let d of selectedYearlyDisbursements">
+                {{formatNumber(d.expectedDisbursements)}}
+              </td>
+            </tr>
+            <tr>
+              <td>Total disbursements</td>
+              <td class="text-center" *ngFor="let d of selectedYearlyDisbursements">
+                {{formatNumber(d.disbursements)}}
+              </td>
+            </tr>
+          </table>
+          <span *ngIf="selectedYearlyDisbursements.length == 0" class="text-info">
+            <i>No disbursements to show</i>
+          </span>
+        </div>
+      </div><br />
+      <button class="btn btn-info float-right" (click)="closeDetail();">Ok</button>
+    </div>
+  </div>
+</jw-modal>
+
+<error-modal message={{errorMessage}}></error-modal>

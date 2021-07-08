@@ -4,6 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { StoreService } from '../services/store-service';
 import { BlockUI, NgBlockUI } from 'ng-block-ui';
 import { SecurityHelperService } from '../services/security-helper.service';
+import { InfoModalComponent } from '../info-modal/info-modal.component';
+import { Messages } from '../config/messages';
+import { Settings } from '../config/settings';
+import { ReportService } from '../services/report.service';
+import { JoinProjectModalComponent } from '../join-project-modal/join-project-modal.component';
 
 @Component({
   selector: 'app-view-project',
@@ -12,21 +17,34 @@ import { SecurityHelperService } from '../services/security-helper.service';
 })
 export class ViewProjectComponent implements OnInit {
   requestNo: number = 0;
-  errorMessage: string = '';
+  errorMessage: string = null;
+  successMessage: string = null;
   isError: boolean = false;
   isLoading: boolean = true;
+  isLoggedIn: boolean = false;
   isLocationLoading: boolean = true;
   isSectorLoading: boolean = true;
   isFunderLoading: boolean = true;
   isImplementerLoading: boolean = true;
   isDisbursementLoading: boolean = true;
   isDocumentLoading: boolean = true;
+  isExcelGenerating: boolean = true;
+  excelFile: string = null;
+  projectProfileLink: string = null;
+  dated: string = null;
   projectId: number = 0;
   delayTime: number = 2000;
+  userProjectIds: any = [];
+  deleteProjectIds: any = [];
   permissions: any = {};
   monthStrings: any = { 
     "1": "January", "2": "February", "3": "March", "4": "April", "5": "May", "6": "June",
     "7": "July", "8": "August", "9": "September", "10": "October", "11": "November", "12": "December" 
+  }
+
+  disbursementTypeConstants: any = {
+    1: 'Actual',
+    2: 'Planned'
   }
 
   //project data variables
@@ -37,21 +55,33 @@ export class ViewProjectComponent implements OnInit {
   projectImplementers: any = [];
   projectDisbursements: any = [];
   projectDocuments: any = [];
+  projectMarkers: any = [];
 
   //Overlay UI blocker
   @BlockUI() blockUI: NgBlockUI;
 
   constructor(private projectService: ProjectService, private route: ActivatedRoute,
     private router: Router,
-    private storeService: StoreService, private securityService: SecurityHelperService) { }
+    private storeService: StoreService, private securityService: SecurityHelperService,
+    private infoModal: InfoModalComponent,
+    private reportService: ReportService,
+    private joinProjectModal: JoinProjectModalComponent) { }
 
   ngOnInit() {
+    this.storeService.newReportItem(Settings.dropDownMenus.projects);
+    this.isLoggedIn = this.securityService.checkIsLoggedIn();
     this.permissions = this.securityService.getUserPermissions();
     if (this.route.snapshot.data) {
       var id = this.route.snapshot.params["{id}"];
       this.projectId = id;
       if (id) {
-        this.loadProjectData(id);   
+        if (this.isLoggedIn) {
+          this.getDeleteProjectIds();
+          this.loadUserProjects();
+        } else {
+          this.loadProjectData(id);   
+        }
+        this.getProjectExcelReport();
 
         setTimeout(() => {
           this.loadProjectLocations(id);
@@ -195,7 +225,73 @@ export class ViewProjectComponent implements OnInit {
       error => {
         console.log(error);
       }
-    )
+    );
+  }
+
+  loadUserProjects() {
+    this.projectService.getUserProjects().subscribe(
+      data => {
+        if (data) {
+          this.userProjectIds = data;
+        }
+        this.loadProjectData(this.projectId);
+      }
+    );
+  }
+
+  getProjectExcelReport() {
+    this.projectService.getProjectReport(this.projectId.toString()).subscribe(
+      data => {
+        if (data) {
+          if (data.reportSettings) {
+            this.excelFile = data.reportSettings.excelReportName;
+            this.projectProfileLink = data.reportSettings.reportUrl;
+            var currentDate = this.storeService.getLongDateString(new Date());
+            this.dated = currentDate;
+            this.setExcelFile();
+            var projects = data.projectProfile.projects;
+            if (projects.length > 0) {
+              var project = projects[0];
+              this.projectMarkers = project.markers.filter(m => m.values != '');
+            }
+          }
+          this.isExcelGenerating = false;
+        }
+      }
+    );
+  }
+
+  formatDateUKStyle(dated: any) {
+    var validDate = Date.parse(dated);
+    if (isNaN(validDate)) {
+      return 'Invalid date';
+    }
+    var datesArr = dated.split('/');
+    return this.storeService.formatDateInUkStyle(parseInt(datesArr[2]), parseInt(datesArr[0]), parseInt(datesArr[1]));
+  }
+  
+  displayFieldValues(json: any) {
+    return this.storeService.parseAndDisplayJsonAsString(json);
+  }
+
+  setExcelFile() {
+    if (this.excelFile) {
+      this.excelFile = this.storeService.getExcelFilesUrl() + this.excelFile;
+    }
+  }
+
+  printProfile() {
+    this.storeService.printSimpleReport('rpt-project', 'Project profile report');
+  }
+
+  generatePDF() {
+    this.blockUI.start('Generating PDF...');
+    setTimeout(() => {
+      var result = Promise.resolve(this.reportService.generatePDF('rpt-project'));
+      result.then(() => {
+        this.blockUI.stop();
+      });
+    },500);
   }
 
   deleteProjectLocation(projectId, locationId) {
@@ -204,12 +300,8 @@ export class ViewProjectComponent implements OnInit {
       data => {
         this.projectLocations = this.projectLocations.filter(l => l.id != locationId);
         this.blockUI.stop();
-      },
-      error => {
-        console.log(error);
-        this.blockUI.stop();
       }
-    )
+    );
   }
 
   deleteProjectSector(projectId, sectorId) {
@@ -218,12 +310,8 @@ export class ViewProjectComponent implements OnInit {
       data => {
         this.projectSectors = this.projectSectors.filter(s => s.sectorId != sectorId);
         this.blockUI.stop();
-      },
-      error => {
-        console.log(error);
-        this.blockUI.stop();
       }
-    )
+    );
   }
 
   deleteProjectFunder(projectId, funderId) {
@@ -254,12 +342,10 @@ export class ViewProjectComponent implements OnInit {
     )
   }
 
-  deleteProjectDisbursement(projectId, startingYear, startingMonth) {
+  deleteProjectDisbursement(id) {
     this.blockUI.start('Working...');
-    this.projectService.deleteProjectDisbursement(projectId, startingYear, startingMonth).subscribe(
+    this.projectService.deleteProjectDisbursement(id).subscribe(
       data => {
-        this.projectDisbursements = this.projectDisbursements.filter(d => d.projectId != projectId 
-          && d.startingYear != startingYear);
         this.blockUI.stop();
       },
       error => {
@@ -281,6 +367,63 @@ export class ViewProjectComponent implements OnInit {
         this.blockUI.stop();
       }
     )
+  }
+
+  convertDateToLongString(dated: string) {
+    return (this.storeService.getLongDateString(dated));
+  }
+
+  isShowContactToUser(id: number) {
+    return (this.userProjectIds.filter(ids => ids.id == id).length > 0) ? false : true;
+  }
+
+  contactProject(id) {
+    this.router.navigateByUrl('contact-project/' + id);
+  }
+
+  isShowDeleteProject(id: number) {
+    if (this.deleteProjectIds.includes(id)) {
+      return false;
+    }
+    return (this.userProjectIds.filter(ids => ids.id == id).length > 0) ? true : false;
+  }
+
+  makeDeleteRequest(id: number) {
+    if (id) {
+      var model = { projectId: id, userId: 0 };
+      this.blockUI.start('Making project delete request...');
+      this.projectService.makeProjectDeletionRequest(model).subscribe(
+        data => {
+          if (data) {
+            this.deleteProjectIds.push(id);
+            this.successMessage = Messages.DELETION_REQUEST_INFO;
+            this.infoModal.openModal();
+          }
+          this.blockUI.stop();
+        }
+      );
+    }
+  }
+
+  getDeleteProjectIds() {
+    this.projectService.getDeleteProjectIds().subscribe(
+      data => {
+        if (data) {
+          this.deleteProjectIds = data;
+        }
+      }
+    );
+  }
+
+  canJoinProject() {
+    var projectIds = this.userProjectIds.map(p => p.id);
+    return (projectIds.includes(this.projectId)) ? false : true;
+  }
+
+  applyForProjectMembership() {
+    if (this.projectId) {
+      this.joinProjectModal.openModal();
+    }
   }
 
   hideLoader() {
@@ -310,5 +453,16 @@ export class ViewProjectComponent implements OnInit {
   hideDocumentLoader() {
     this.isDocumentLoading = false;
   }
+
+  formatNumber(value: number) {
+    if (!value) {
+      return value;
+    }
+    if (!isNaN(value) && value > 0) {
+      return this.storeService.getNumberWithCommas(value);
+    }
+    return value;
+  }
+
 
 }

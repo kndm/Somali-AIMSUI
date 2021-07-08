@@ -31,11 +31,31 @@ export class SecurityHelperService {
       var token = userObj.token;
       //var eToken = this.encryptText(token);
       localStorage.setItem('token', token);
+      localStorage.setItem('userId', userObj.id);
+      localStorage.setItem('userEmail', userObj.email);
       localStorage.setItem('displayName', userObj.displayName);
       localStorage.setItem('organizationId', userObj.organizationId);
+      localStorage.setItem('organizationName', userObj.organizationName);
       localStorage.setItem('userType', userObj.userType);
+      localStorage.setItem('isUnAffiliated', userObj.isUnAffiliated);
       localStorage.setItem('isLoggedIn', true.toString());
     }
+  }
+
+  checkIsLoggedIn() {
+    return (localStorage.getItem('isLoggedIn') == 'true') ? true : false;
+  }
+
+  checkIsUnAffilated() {
+    return (localStorage.getItem('isUnAffiliated') == 'true') ? true : false;
+  }
+  
+  getUserOrganizationId() {
+    return localStorage.getItem('organizationId');
+  }
+
+  getUserOrganization() {
+    return localStorage.getItem("organizationName");
   }
 
   getUserToken() {
@@ -44,6 +64,14 @@ export class SecurityHelperService {
       return this.decryptText(token);
     }
     return null;
+  }
+
+  getUserEmail() {
+    return localStorage.getItem('userEmail');
+  }
+
+  getUserId() {
+    return localStorage.getItem('userId');
   }
 
   getUserPermissions() {

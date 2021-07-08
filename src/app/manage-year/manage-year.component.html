@@ -1,0 +1,56 @@
+<div class="container-fluid view-area">
+  <div class="row">
+    <div class="col-md-12">
+      <ul class="nav nav-tabs">
+        <!--<li class="nav-item">
+          <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/financial-years']">Financial years list</a>
+        </li>-->
+        <li class="nav-item">
+          <a class="nav-link active btn-info" data-toggle="tab">Adjust start day</a>
+        </li>
+      </ul>
+    </div>
+    <div class="col-sm-6 col-md-4 col-lg-4 mx-auto">
+      <div class="card card-signin my-5">
+        <div class="card-body">
+          <div *ngIf="isError" class="alert alert-danger alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Error!</strong> {{errorMessage}}
+          </div>
+          <h5 class="card-title text-center">Set start day</h5>
+          
+          <form class="form-signin" (ngSubmit)="yearForm.form.valid && saveFinancialYear()" #yearForm="ngForm">
+            
+            <div class="form-group">
+              <select class="form-control" name="month" [(ngModel)]="model.month" #month="ngModel" (change)="onMonthChange()" required>
+                  <option value="0">--Select month--</option>
+                  <option *ngFor="let month of months" value="{{month.index}}">
+                      {{month.month}}
+                  </option>
+              </select>
+              <div *ngIf="yearForm.submitted" [hidden]="month != 0" class="alert alert-danger">
+                Month is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <select [class.disable]="model.month == 0" class="form-control" name="day" [(ngModel)]="model.day" #day="ngModel" required>
+                  <option value="0">--Select day--</option>
+                  <option *ngFor="let day of days" value="{{day}}">
+                      {{day}}
+                  </option>
+              </select>
+              <div *ngIf="yearForm.submitted" [hidden]="day != 0" class="alert alert-danger">
+                Day is required
+              </div>
+            </div>
+            
+            <button [class.disable]="isBtnDisabled" class="btn btn-lg btn-info btn-block text-uppercase margin-top-10" type="submit">{{btnText}}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<error-modal message="{{errorMessage}}"></error-modal>

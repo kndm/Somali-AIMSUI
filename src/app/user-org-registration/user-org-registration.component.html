@@ -1,24 +1,58 @@
 <div class="container-fluid view-area">
   <div class="row">
-    <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
+    <div class="col-sm-12 col-md-9 col-lg-7 mx-auto margin-top-10">
       <div class="card card-signin my-5">
         <div class="card-body">
           <div *ngIf="isError" class="alert alert-danger alert-dismissible">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <strong>Error!</strong> {{errorMessage}}
           </div>
-          <h5 class="card-title text-center">Register Organization</h5>
+          <h5 class="card-title text-center">Select or create organization</h5>
 
-          <form (ngSubmit)="registerUser()" class="example-form" [formGroup]='usersForm'>
-            <mat-form-field class="example-full-width">
-              <input matInput placeholder="Enter/Select Organization" aria-label="Organization" [matAutocomplete]="auto" [formControl]="userInput">
-              <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn.bind(this)">
-                <mat-option *ngFor="let org of filteredOrganizations | async" [value]="org">
-                  <span>{{org.organizationName}}</span>
-                </mat-option>
-              </mat-autocomplete>
-            </mat-form-field>
-            <button [class.disable]="isProcessing" class="btn btn-lg btn-info btn-block text-uppercase" type="submit">{{btnRegisterText}}</button>
+          <form (ngSubmit)="usersForm.form.valid && registerUser()" class="example-form" #usersForm='ngForm'>
+            <div class="form-group">
+              <label>Organization type: </label>
+              <select [class.disable]="isLoading" class="form-control" name="organizationTypeId" [(ngModel)]="model.organizationTypeId" id="organizationTypeId"
+              #organizationTypeId="ngModel" (change)="filterOrganizationsList()" required>
+                <option *ngFor="let type of organizationTypes" [value]="type.id">{{type.typeName}}</option>
+              </select>
+              <div *ngIf="usersForm.submitted" [hidden]="organizationTypeId.valid" class="alert alert-danger">
+                Organization type is required
+              </div>
+            </div>
+            <div class="input-group">
+              <input [readonly]="selectedOrganizationId != 0" class="form-control" placeholder="Enter organization name" type="text" name="organizationName"
+                [(ngModel)]="model.organizationName" #organizationName="ngModel" onkeypress="return event.keyCode != 13;"
+                (input)="filterOrganizations()" minlength="2" maxlength="100" required>
+              <span class="input-group-btn">
+                &nbsp;
+                <button [class.disable]="selectedOrganizationId == 0"  title="Clear" class="btn btn-danger btn-lg" (click)="clear()" type="button">
+                  <i class="fa fa-close"></i>
+                </button>
+              </span>
+            </div>
+            <div *ngIf="usersForm.submitted" [hidden]="organizationName.valid" class="alert alert-danger form-group">
+              Valid organization name is required (at least 2 characters)
+            </div>
+            <div class="form-group margin-top-10">
+              <button [class.disable]="isProcessing" type="submit" class="btn btn-info btn-lg btn-block text-uppercase">{{btnRegisterText}}</button>
+            </div>
+            <div class="iati-box">
+                <table *ngIf="filteredOrganizations.length > 0" class="table table-bordered">
+                    <tr *ngFor="let org of filteredOrganizations">
+                      <td>{{org.organizationName}}</td>
+                      <td>
+                        <button [class.disable]="selectedOrganizationId == org.id" type="button" id="org-{{org.id}}" (click)="selectOrganization($event)" class="btn btn-success btn-sm">Select</button>
+                      </td>
+                    </tr>
+                  </table>
+                  <span class="text-info" *ngIf="filteredOrganizations.length == 0 && !isLoading">
+                    <i>No organizations found</i>
+                  </span>
+                  <span *ngIf="isLoading" class="text-center">
+                    <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading...</span>
+                  </span>
+            </div>
           </form>
         </div>
       </div>

@@ -11,13 +11,15 @@ import { StoreService } from '../services/store-service';
 })
 export class UserRegistrationComponent implements OnInit {
   userTypes = [];
-  model: any = {};
+  model: any = { email: null, confirmEmail: null, password: null, confirmPassword: null};
   isEmailOk: boolean = false;
   emailNotAvailable: boolean = false;
   disableEmail: boolean = false;
   isNameFocus: boolean = false;
   isEmailFocus: boolean = false;
+  isConfirmEmailFocus: boolean = true;
   isSearchingEmail: boolean = false;
+  invalidEmail: boolean = false;
   btnCheckEmailTitle: string = 'Check Availability';
 
   constructor(private userService: UserService, private router: Router, private storeService: StoreService) { 
@@ -25,11 +27,10 @@ export class UserRegistrationComponent implements OnInit {
   }
  
   onSubmit() {
-    //console.log(JSON.stringify(this.model));
   }
 
   ngOnInit() {
-    this.model = new RegistrationModel('', '', '', '', '', '', false);
+    this.model = new RegistrationModel(null, null, null, null, null, null, false);
     this.fillUserTypes();
   }
 
@@ -46,25 +47,31 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   checkIfEmailAvailable() {
+    if (!this.model.email) {
+      this.invalidEmail = true;
+      return false;
+    }
+
     this.isSearchingEmail = true;
     this.btnCheckEmailTitle = 'Wait processing...';
-
-    this.userService.checkEmailAvailability(this.model.Email).subscribe(
+    this.userService.checkEmailAvailability(this.model.email).subscribe(
       data => {
-        console.log(data);
-        this.isEmailOk = data;
-        if (!this.isEmailOk) {
-          this.emailNotAvailable = true;
-          this.disableEmail = false;
-          this.isEmailFocus = true;
-        } else {
-          this.emailNotAvailable = false;
-          this.disableEmail = true;
-          this.isNameFocus = true;
-          this.isEmailFocus = false;
+        if (data) {
+          this.isEmailOk = data.success;
+          if (!this.isEmailOk) {
+            this.emailNotAvailable = true;
+            this.disableEmail = false;
+            this.isEmailFocus = true;
+          } else {
+            this.emailNotAvailable = false;
+            this.disableEmail = true;
+            this.isNameFocus = true;
+            this.isEmailFocus = false;
+            this.isConfirmEmailFocus = true;
+          }
+          this.isSearchingEmail = false;
+          this.btnCheckEmailTitle = 'Check Email';
         }
-        this.isSearchingEmail = false;
-        this.btnCheckEmailTitle = 'Check Email';
       },
       error => {
         console.log("Request Failed: ", error);
@@ -77,6 +84,16 @@ export class UserRegistrationComponent implements OnInit {
   }
 
   proceedRegistration() {
+    if (this.model.email == null || this.model.password == null) {
+      return false;
+    }
+    if (this.model.email != this.model.confirmEmail) {
+      return false;
+    }
+
+    if (this.model.password != this.model.confirmPassword) {
+      return false;
+    }
     this.storeService.newRegistration(this.model);
     this.router.navigateByUrl('user-org-registration');
   }

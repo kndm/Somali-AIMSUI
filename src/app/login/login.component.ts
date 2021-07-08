@@ -4,6 +4,7 @@ import { UserService } from '../services/user-service';
 import { SecurityHelperService } from '../services/security-helper.service';
 import { Router } from '@angular/router';
 import { StoreService } from '../services/store-service';
+import { CurrencyService } from '../services/currency.service';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +21,8 @@ export class LoginComponent implements OnInit {
   requestNo: number = 0;
 
   constructor(private userService: UserService, private securityService: SecurityHelperService,
-    private router: Router, private storeService: StoreService) { }
+    private router: Router, private storeService: StoreService,
+    private currencyService: CurrencyService) { }
 
   ngOnInit() {
     var isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -28,6 +30,7 @@ export class LoginComponent implements OnInit {
       this.router.navigateByUrl('home');
     }
 
+    this.requestNo = this.storeService.getNewRequestNumber();
     this.model = new LoginModel('', '');
     this.storeService.currentRequestTrack.subscribe(model => {
       if (model && this.requestNo == model.requestNo && model.errorStatus != 200) {
@@ -53,22 +56,33 @@ export class LoginComponent implements OnInit {
     this.isBtnDisabled = true;
     this.requestNo = this.storeService.getNewRequestNumber();
 
-    this.userService.authenticateUser(this.model.Email, this.model.Password).subscribe( data => {
+    this.userService.authenticateUser(this.model.Email, this.model.Password).subscribe(data => {
       if (data) {
-        if (data.token) {
-          this.securityService.storeLoginData(data);
-            location.reload();
-        } else {
-            this.errorMessage = 'Username/Password entered is incorrect';
-            this.isError = true;
-            this.resetDefaultStatus();
+        if (data && data.error) {
+          this.errorMessage = 'Username/Password entered is incorrect';
+          this.isError = true;
+          this.resetDefaultStatus();
         }
-      } 
-    },
-    error => {
-      console.log("Request Failed: ", error);
-      this.resetDefaultStatus();
+        else if (data && !data.error && !data.isApproved) {
+          this.errorMessage = 'Your account is not approved yet';
+          this.isError = true;
+          this.resetDefaultStatus();
+        } else if (data.token) {
+          this.securityService.storeLoginData(data);
+          location.reload();
+        } 
+      }
     });
+  }
+
+  getExchangeRates() {
+    this.currencyService.getExchangeRatesList().subscribe(
+      data => {
+        if (data) {
+          this.storeService.storeExchangeRates(data.rates);
+        }
+      }
+    );
   }
 
   resetDefaultStatus() {

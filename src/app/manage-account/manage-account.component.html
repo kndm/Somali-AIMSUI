@@ -27,40 +27,40 @@
             </div>
 
             <div *ngIf="currentTab == 'password'" class="col-md-12">
-              <h5 class="card-title text-center">Change Password</h5>
+              <h5 class="card-title text-center">Change password</h5>
               <form class="form-signin" (ngSubmit)="accountForm.form.valid && changePassword()" #accountForm="ngForm">
 
                 <div class="form-group">
-                  <label for="password">Enter New Password</label>
+                  <label for="password">Enter new password</label>
                   <input type="password" class="form-control" id="password" [(ngModel)]="model.password" name="location"
                     #password="ngModel" required>
-                  <div [hidden]="password.valid" class="alert alert-danger">
+                  <div *ngIf="accountForm.submitted" [hidden]="password.valid" class="alert alert-danger">
                     Password is required
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label for="confirmPassword">Confirm Password</label>
+                  <label for="confirmPassword">Confirm password</label>
                   <input type="password" class="form-control" id="confirmPassword" [(ngModel)]="model.confirmPassword"
                     name="confirmPassword" #confirmPassword="ngModel" required>
-                  <div [hidden]="model.password == model.confirmPassword" class="alert alert-danger">
+                  <div *ngIf="accountForm.submitted" [hidden]="model.password == model.confirmPassword" class="alert alert-danger">
                     Passwords do not match
                   </div>
                 </div>
 
-                <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">{{btnPasswordText}}</button>
+                <button [class.disable]="isBtnDisabled" class="btn btn-lg btn-info btn-block text-uppercase" type="submit">{{btnPasswordText}}</button>
               </form>
             </div>
 
             <div *ngIf="currentTab == 'account'">
-              <h5 class="card-title text-center">Delete Account</h5>
+              <h5 class="card-title text-center">Delete account</h5>
               <form class="form-signin" (ngSubmit)="dAccountForm.form.valid && confirmDeleteAccount()" #dAccountForm="ngForm">
 
                 <div class="form-group">
-                  <label for="password">Enter Current Password</label>
+                  <label for="password">Enter current password</label>
                   <input type="password" class="form-control" id="password" [(ngModel)]="dModel.password"
                     name="password" #password="ngModel" required>
-                  <div [hidden]="password.valid" class="alert alert-danger">
+                  <div *ngIf="dAccountForm.submitted" [hidden]="password.valid" class="alert alert-danger">
                     Password is required
                   </div>
                 </div>
@@ -89,6 +89,33 @@
         <button class="btn btn-info" (click)="deleteAccount()">Yes Delete Account</button>
         &nbsp;
         <button class="btn btn-danger" (click)="closeModal();">No</button>
+    </div>
+  </div>
+</jw-modal>
+
+<jw-modal id="reset-info-modal">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+          <div class="card-header bg-info text-white">Information Message</div>
+          <div class="card-body text-info">
+              Your password is reset successfully. You must use new password on next login.
+          </div>
+        </div><br />
+    </div>
+  </div>
+</jw-modal>
+
+<jw-modal id="error-message-modal">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+          <div class="card-header bg-danger text-white">Error Message</div>
+          <div class="card-body text-danger">
+              {{errorMessageForModal}}
+          </div>
+        </div><br />
+        <button class="btn btn-danger" (click)="closeErrorModal()">Close</button>
     </div>
   </div>
 </jw-modal>

@@ -19,12 +19,10 @@ export class UserOrgRegistrationComponent implements OnInit {
 
   organizations: any = [];
   userInput = new FormControl();
-  filteredOrganizations: Observable<Organization[]>;
+  filteredOrganizations: any = [] ;
   organizationTypes: any = [];
   organizationType: string = null;
-  usersForm: FormGroup;
-  isLoading = false;
-  model: RegistrationModel = null;
+  isLoading = true;
   organizationId: number = 0;
   organizationTypeId: string = null;
   isProcessing: boolean = false;
@@ -32,11 +30,11 @@ export class UserOrgRegistrationComponent implements OnInit {
   isShowType: boolean = false;
   delaySeconds: number = 2000;
   selectedOrganizationId: number = 0;
-  //isOrgTypeVisible: boolean = true;
   validationMessage: string = '';
   requestNo: number = 0;
   isError: boolean = false;
   errorMessage: string = '';
+  model: any = { email: null, password: null, organizationTypeId: null, organizationId: null, isNewOrganization: false, organizationName: null };
 
   constructor(private fb: FormBuilder, private organizationService: OrganizationService,
     private storeService: StoreService, private userService: UserService,
@@ -48,7 +46,7 @@ export class UserOrgRegistrationComponent implements OnInit {
   ngOnInit() {
     this.storeService.currentRegistration.subscribe(model => {
       if (model) {
-        if (model.Email === '' || model.Email == null) {
+        if (model.email === '' || model.email == null) {
           this.router.navigateByUrl('user-registration');
         } else {
           this.model = model;
@@ -58,17 +56,14 @@ export class UserOrgRegistrationComponent implements OnInit {
       }
     });
 
+    this.requestNo = this.storeService.getNewRequestNumber();
     this.storeService.currentRequestTrack.subscribe(model => {
       if (model && this.requestNo == model.requestNo && model.errorStatus != 200) {
         this.errorMessage = model.errorMessage;
         this.isError = true;
       }
     });
-
-    this.usersForm = this.fb.group({
-      userInput: null,
-    });
-    
+    this.loadOrganizationTypes();
     this.loadOrganizations();
   }
   
@@ -81,57 +76,101 @@ export class UserOrgRegistrationComponent implements OnInit {
     return organization ? organization.organizationName : undefined;
   }
 
-  private filterOrganizations(value: string): Organization[] {
-    if (typeof value != "string") {
-    } else {
-      const filterValue = value.toLowerCase();
-      return this.organizations.filter(organization => organization.organizationName.toLowerCase().indexOf(filterValue) !== -1);
+  selectOrganization(e) {
+    var id = e.currentTarget.id.split('-')[1];
+    if (id) {
+      var organization = this.organizations.filter(o => o.id == id);
+      if (organization.length > 0) {
+        this.model.organizationTypeId = null;
+        if (organization[0].organizationTypeId != 0) {
+          this.model.organizationTypeId = organization[0].organizationTypeId;        
+        }
+        this.selectedOrganizationId = organization[0].id;
+        this.model.organizationName = organization[0].organizationName;
+      }
     }
   }
 
-  loadOrganizations() {
-    this.organizationService.getOrganizationsList().subscribe(
+  filterOrganizations() {
+    var org = this.model.organizationName;
+    var organizations = [];
+    if (this.model.organizationTypeId && this.model.organizationTypeId != 0) {
+      organizations = this.organizations.filter(o => o.organizationTypeId == this.model.organizationTypeId);
+    } else {
+      organizations = this.organizations;
+    }
+
+    if (!org) {
+      this.filteredOrganizations = organizations;
+    } else {
+      org = org.toLowerCase();
+      this.filteredOrganizations = organizations.filter(o => o.organizationName.toLowerCase().indexOf(org) != -1);
+    }
+  }
+
+  loadOrganizationTypes() {
+    this.organizationService.getOrganizationTypes().subscribe(
       data => {
-        this.organizations = data;
-        this.filteredOrganizations = this.userInput.valueChanges
-      .pipe(
-        startWith(''),
-        map(organization => organization ? this.filterOrganizations(organization) : this.organizations.slice())
-      );
-      },
-      error => {
-        console.log("Request Failed: ", error);
+        if (data) {
+          this.organizationTypes = data;
+        }
       }
     );
   }
 
+  loadOrganizations() {
+    this.organizationService.getUserOrganizations().subscribe(
+      data => {
+        if (data) {
+          this.organizations = data;
+          this.filteredOrganizations = data;
+        }
+        this.isLoading = false;
+      }
+    );
+  }
+
+  filterOrganizationsList() {
+    var id = this.model.organizationTypeId;
+    if (id) {
+      this.model.organizationName = null;
+      this.model.organizationId = null;
+      this.selectedOrganizationId = 0;
+      this.filteredOrganizations = this.organizations.filter(o => o.organizationTypeId == id);
+    }
+  }
+
   registerUser() {
+    if (this.model.organizationTypeId == 0 || this.model.organizationTypeId == null) {
+      return false;
+    }
+    
     if (this.selectedOrganizationId == 0) {
-      this.model.OrganizationName = this.userInput.value;
-      if (this.model.OrganizationName.length == 0) {
-        //Need to show a dialog message here
-        console.log('error');
+      if (this.model.organizationName.length == 0) {
         return false;
-      } else if (this.model.IsNewOrganization) {
+      } else if (this.model.isNewOrganization) {
+        return false;
+      } else if (!this.model.organizationTypeId) {
         return false;
       }
-      this.model.IsNewOrganization = true;
-      this.model.OrganizationId = '0';
+      this.model.isNewOrganization = true;
+      this.model.organizationId = 0;
     } else if (this.selectedOrganizationId != 0) {
-      this.model.OrganizationId = this.selectedOrganizationId.toString();
+      this.model.organizationId = parseInt(this.selectedOrganizationId.toString());
     }
 
+    this.model.organizationTypeId = parseInt(this.model.organizationTypeId);
     this.requestNo = this.storeService.getNewRequestNumber();
     this.isProcessing = true;
     this.btnRegisterText = 'Wait processing...';
     this.userService.registerUser(this.model).subscribe(
       data => {
         if (!this.isError) {
-          this.resetModel();
           this.storeService
             .newInfoMessage(Messages.USER_REGISTRATION_MESSAGE);
           this.btnRegisterText = 'Redirecting...';
           setTimeout(() => {
+            this.resetModel();
             this.router.navigateByUrl('');
           }, this.delaySeconds);
         } else {
@@ -152,6 +191,11 @@ export class UserOrgRegistrationComponent implements OnInit {
 
   resetModel() {
     this.model = new RegistrationModel('', '', '', '', '', '', false);
+  }
+
+  clear() {
+    this.model.organizationName = null;
+    this.selectedOrganizationId = 0;
   }
 
 }

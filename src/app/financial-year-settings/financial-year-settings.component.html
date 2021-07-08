@@ -1,0 +1,56 @@
+<block-ui>
+    <div class="container-fluid view-area">
+        <div class="row">
+          <div class="col-md-12">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active btn-info" data-toggle="tab">Financial year settings</a>
+                </li>
+            </ul>
+          </div>
+          
+          <div class="col-sm-9 col-md-9 col-lg-9 mx-auto">
+            <div class="card card-signin my-5">
+              <div class="card-body">
+                <h5 class="card-title text-center">Financial year settings</h5>
+                <p class="text-info text-justify">
+                    Please set month and day of the year to mark when financial year starts. e.g. April 1st.
+                    It must be noted that by changing the month and day settings, system will update the financial years
+                    for projects which are already entered as per new settings and may drop disbursements that are out
+                    of the span of the financial years assigned to projects. It is recommended to take backup of the database before applying
+                    new settings so that in any other case AIMS may be reverted to the current state of the database.
+                </p>
+                <form class="form-signin" (ngSubmit)="yearForm.form.valid && saveSettings()" #yearForm="ngForm">
+      
+                  <div class="form-group">
+                    <select class="form-control" name="month" [(ngModel)]="model.month" #month="ngModel" (change)="onMonthChange()" required>
+                        <option value="0">--Select month--</option>
+                        <option *ngFor="let month of months" value="{{month.index}}">
+                            {{month.month}}
+                        </option>
+                    </select>
+                    <div *ngIf="yearForm.submitted" [hidden]="month != 0" class="alert alert-danger">
+                      Month is required
+                    </div>
+                  </div>
+      
+                  <div class="form-group">
+                    <select [class.disable]="model.month == 0" class="form-control" name="day" [(ngModel)]="model.day" #day="ngModel" required>
+                        <option value="0">--Select day--</option>
+                        <option *ngFor="let day of days" value="{{day}}">
+                            {{day}}
+                        </option>
+                    </select>
+                    <div *ngIf="yearForm.submitted" [hidden]="day != 0" class="alert alert-danger">
+                      Day is required
+                    </div>
+                  </div>
+      
+                  <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">Save settings</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+</block-ui>

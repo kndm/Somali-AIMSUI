@@ -1,0 +1,148 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Budget report</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <form class="form-signin" (ngSubmit)="getBudgetReport()" #searchForm="ngForm">
+
+              <div class="row margin-top-10">
+                <div class="col-md-3 form-inline">
+                  <label>Currency: </label>&nbsp;&nbsp;
+                  <select [class.disable]="manualExRate == 0" title="Currency for reporting" class="form-control"
+                    (change)="selectCurrency()" id="selectedCurrency" [(ngModel)]="model.selectedCurrency"
+                    name="selectedCurrency" #selectedCurrency="ngModel">
+                    <option *ngFor="let currency of currenciesList" value="{{currency.currency}}">
+                      {{currency.currencyName}}
+                    </option>
+                  </select>&nbsp;
+                  <span *ngIf="manualExRate > 0 && model.selectedCurrency == nationalCurrencyName" class="text-warning">
+                    <b><i>Exchange rate: 1 {{defaultCurrency}} = {{manualExRate}} {{nationalCurrencyName}} on
+                        {{datedToday}}</i></b>
+                  </span>
+
+                  <span *ngIf="manualExRate == 0 && !isDataLoading" class="text-danger">
+                    <i>No exchange rate available, contact Administrator.</i>
+                  </span>
+                </div>
+
+                <div class="col-md-3 form-inline">
+                  <label>Arrangement: </label>&nbsp;&nbsp;
+                  <select class="form-control" name="arrangement" [(ngModel)]="arrangementConstant"
+                    #arrangement="ngModel" (change)="manageDataDisplayArrangements()">
+                    <option *ngFor="let arrangement of reportArrangements" value="{{arrangement.id}}">
+                      {{arrangement.label}}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <span [class.disable]="!defaultCurrency" class="float-right">
+                    <button type="submit" class="btn btn-info margin-top-2">{{btnReportText}}</button>&nbsp;
+                    <button *ngIf="reportDataList && reportDataList.reportSettings" type="button"
+                      class="btn btn-danger margin-top-2" (click)="generatePDF()">Download PDF</button>&nbsp;
+                    <a *ngIf="excelFile" href="{{excelFile}}" class="btn btn-success margin-top-2">Download
+                      spreadsheet</a>&nbsp;
+                    <button *ngIf="reportDataList && reportDataList.years" type="button"
+                      class="btn btn-warning margin-top-2" (click)="printReport()">Print report</button>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row margin-top-10">
+                <div class="col-md-6">
+                  <div *ngIf="!defaultCurrency && !isDataLoading" class="col-md-12">
+                    <span class="text-danger">
+                      Default currency is not set and it may produce errors on reports.
+                      Please contact administrator.
+                    </span>
+                  </div>
+                </div>
+
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="rpt-budget-report">
+      <div id="rpt-heading" *ngIf="reportDataList && reportDataList.reportSettings"
+        class="col-md-12 text-center margin-top-10">
+        <h5>Budget report <small>(Currency: {{this.selectedCurrencyName}})</small></h5>
+      </div>
+
+      <div *ngIf="reportDataList && reportDataList.reportSettings && chartData.length > 0 && !isChartLoading"
+        class="col-md-12 margin-top-10">
+        <div class="offset-2 col-md-8">
+          <canvas id="chart" baseChart [datasets]="chartData" [labels]="chartLabels" [options]="chartOptions"
+            [legend]="chartLegend" [chartType]="chartType" [plugins]="barChartPlugins"></canvas>
+        </div>
+      </div>
+
+      <div class="col margin-top-20">
+        <div class="col-md-12 margin-top-10">
+          <div *ngIf="reportDataList && reportDataList.years" class="margin-bottom-none">
+
+            <table class="table small margin-bottom-none">
+              <tbody>
+                <tr>
+                  <th width="15%">{{currentArrangement}}</th>
+                  <th width="17%" class="text-right" *ngFor="let year of reportDataList.years">{{year.year}}</th>
+                </tr>
+                <ng-container *ngIf="arrangementConstant == arrangementConstants.SECTORS">
+                  <tr *ngFor="let sector of reportDataList.parentSectorDisbursements">
+                    <td><b>{{sector.sectorName}}</b></td>
+                    <td class="text-right" *ngFor="let d of sector.disbursements">
+                      {{formatNumber(d.totalValue)}}
+                    </td>
+                  </tr>
+                </ng-container>
+                <ng-container *ngIf="arrangementConstant == arrangementConstants.LOCATIONS">
+                  <tr *ngFor="let location of reportDataList.locationDisbursements">
+                    <td><b>{{location.locationName}}</b></td>
+                    <td class="text-right" *ngFor="let d of location.disbursements">
+                      {{formatNumber(d.totalValue)}}
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+
+          </div>
+
+          <div class="col-md-12" *ngIf="reportDataList && reportDataList.projects && reportDataList.projects == 0">
+            <span class="text-info"><i>No budget data avaialable to show</i></span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="col-md-12 small">
+        <div *ngIf="reportDataList && reportDataList.reportSettings" class="text-center margin-top-20 text-info">
+          Report link: <a class="text-info"
+            href="{{reportDataList.reportSettings.reportUrl}}">{{reportDataList.reportSettings.reportUrl}}</a>
+        </div>
+        <div class="text-center margin-top-5">
+          <span><i>Generated on: {{getTodaysDate()}}</i></span>
+        </div>
+      </div>
+
+    </div>
+
+
+  </block-ui>
+</div>
+
+<error-modal message={{errorMessage}}></error-modal>

@@ -1,0 +1,212 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Envelope report</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div *ngIf="!isLoading" class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <form class="form-signin" (ngSubmit)="getEnvelopeReport()" #searchForm="ngForm">
+              
+              <div class="row">
+                <div class="col-md-3">
+                  <select class="form-control" id="startingYear" title="Starting financial year" [(ngModel)]="model.startingYear" name="startingYear"
+                    #startingYear="ngModel" (change)="onChangeStartingYear()" required>
+                    <option value="0">--Starting year--</option>
+                    <option *ngFor="let year of financialYears" [value]="year.financialYear">{{year.label}}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <select class="form-control" id="endingYear" title="Ending financial year" [(ngModel)]="model.endingYear" name="endingYear" #endingYear="ngModel"
+                    (change)="onChangeEndingYear()" required>
+                    <option value="0">--Ending year--</option>
+                    <option *ngFor="let year of financialYears" [value]="year.financialYear">{{year.label}}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                    <ng-multiselect-dropdown [placeholder]="'-- All Envelope type/s --'" title="Envelope type" 
+                    [settings]="envelopeTypeSettings" [data]="envelopeTypes"
+                    [(ngModel)]="selectedEnvelopeTypes" 
+                    (onSelect)="onEnvelopeSelect($event)" (onDeSelect)="onEnvelopeDeSelect($event)"
+                    (onSelectAll)="onEnvelopeSelectAll($event)" (onDeSelectAll)="onEnvelopeDeSelectAll($event)"
+                    name="selectedEnvelopeTypes"
+                    #selectedEnvelopeTypesList="ngModel">
+                  </ng-multiselect-dropdown>
+                </div>
+              </div>
+
+              <div class="row margin-top-10">
+                <div class="col-md-6">
+                    <ng-multiselect-dropdown [placeholder]="'-- All organization types --'" 
+                    [settings]="organizationTypeSettings"
+                    title="Organization type" [data]="organizationTypes"
+                    [(ngModel)]="selectedOrganizationTypes" 
+                    name="selectedOrganizationTypes" (onSelect)="getOrganizationsForType();onOrganizationTypeSelect($event)" 
+                    (onDeSelect)="getOrganizationsForType(0);onOrganizationTypeDeSelect($event)" 
+                    (onSelectAll)="getOrganizationsForType(1);onOrganizationTypeSelectAll($event)"
+                    (onDeSelectAll)="getOrganizationsForType(0);onOrganizationTypeDeSelectAll($event)"
+                    #selectedOrganizationTypesList="ngModel">
+                  </ng-multiselect-dropdown>
+                </div>
+                <div class="col-md-6">
+                    <ng-multiselect-dropdown [placeholder]="'-- All organizations --'" title="Organization" 
+                    [settings]="organizationSettings"
+                    [data]="filteredOrganizations"
+                    [(ngModel)]="selectedOrganizations" 
+                    (onSelect)="onOrganizationSelectAll($event)" (onDeSelect)="onOrganizationDeSelect($event)"
+                    (onSelectAll)="onOrganizationSelectAll($event)" (onDeSelectAll)="onOrganizationDeSelectAll($event)"
+                    name="selectedOrganizations"
+                    #selectedOrganizationsList="ngModel">
+                  </ng-multiselect-dropdown>
+                </div>
+              </div>
+
+              <div class="row margin-top-10">
+                <div class="col-md-6">
+                  <select [class.disable]="manualExRate == 0" class="form-control" title="Currency for reporting" (change)="selectCurrency()"
+                    id="selectedCurrency" [(ngModel)]="model.selectedCurrency" name="selectedCurrency"
+                    #selectedCurrency="ngModel">
+                    <option *ngFor="let currency of currenciesList" value="{{currency.currency}}">
+                      {{currency.currencyName}}
+                    </option>
+                  </select>&nbsp;
+                  <span *ngIf="manualExRate > 0 && model.selectedCurrency == nationalCurrencyName" class="text-warning">
+                    <b><i>Exchange rate: 1 {{defaultCurrency}} = {{manualExRate}} {{nationalCurrencyName}} on
+                        {{datedToday}}</i></b>
+                  </span>
+                  <span *ngIf="manualExRate == 0 && !isDataLoading" class="text-danger">
+                    <i>No exchange rate available, contact Administrator.</i>
+                  </span>
+                </div>
+                <div class="col-md-6">
+                  <span [class.disable]="!defaultCurrency" class="float-right">
+                    <button type="submit" class="btn btn-info margin-top-2">{{btnReportText}}</button>
+                    <button *ngIf="envelopeList && envelopeList.length > 0" type="button"
+                      class="btn btn-danger margin-top-2 margin-left-2" (click)="generatePDF()">Download PDF</button>
+                    <a *ngIf="excelFile" href="{{excelFile}}" class="btn btn-success margin-left-2 margin-top-2">Download spreadsheet</a>
+                    <button *ngIf="envelopeList && envelopeList.length > 0" type="button"
+                      class="btn btn-warning margin-top-2 margin-left-2" (click)="printReport()">Print report</button>
+                    <button *ngIf="isAnyFilterSet" type="button" class="btn btn-primary margin-top-2 margin-left-2"
+                      (click)="resetFilters()">Reset filters</button>
+                  </span>
+                </div>
+              </div>
+
+              <div class="row margin-top-10">
+                <div class="col-md-12">
+                  <span *ngIf="!defaultCurrency && !isDataLoading" class="text-danger">
+                    Default currency is not set and it may produce errors on reports.
+                    Please contact administrator.
+                  </span>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="isLoading" class="col-md-12 text-center">
+        <img src="assets/images/loader-md.gif" /><span>&nbsp;Setting up report...</span>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading" class="row margin-top-10">
+      <div *ngIf="envelopeList && envelopeList.length > 0" class="col-md-12">
+        <div class="row">
+          <div class="col-md-9">
+          </div>
+          <div class="col-md-3">
+            <div class="row">
+              <form class="form-inline text-right">
+                  <label>Chart type to display:&nbsp;</label>
+                  <select class="form-control" id="chartType" [(ngModel)]="model.chartType" name="chartType"
+                    #chartType="ngModel" (change)="manageChartType()" required>
+                    <option *ngFor="let chart of chartOptions" value="{{chart.type}}">
+                      {{chart.title}}
+                    </option>
+                  </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="rpt-envelope-pdf-view">
+
+        <div *ngIf="envelopeList && envelopeList.length > 0 && chartData.length > 0" class="col-md-12 text-center margin-top-10">
+            <h5>Envelope report <small>(Currency: {{this.selectedCurrencyName}})</small></h5>
+          </div>
+
+      <div *ngIf="envelopeList && envelopeList.length > 0 && chartData.length > 0"
+        class="col-md-12 margin-top-10">
+        
+        <div class="offset-2 col-md-8">
+          <canvas id="chart" baseChart [datasets]="chartData" [labels]="chartLabels" [options]="stackedChartOptions"
+            [legend]="chartLegend" [chartType]="chartType"></canvas>
+        </div>
+  
+      </div>
+
+      <div *ngIf="reportSettings && envelopeList && envelopeList.length > 0" class="margin-top-20 col-md-12" id="rpt-envelope">
+      
+        <div *ngIf="envelopeList && envelopeList.length > 0">
+          <table class="table table-striped margin-bottom-0 small">
+            <thead>
+              <th width="20%">Envelope type</th>
+              <th width="{{cellPercent}}%" class="text-right" *ngFor="let yr of envelopeYearsList">{{yr}}</th>
+              <th class="text-right" width="{{cellPercent}}%">Total</th>
+            </thead>
+            <tbody></tbody>
+          </table>
+          
+          <table class="table table-striped small margin-bottom-0" *ngFor="let yView of envelopeList">
+            <tr class="row-highlight" title="Click here to view detail" (click)="displayHideRow(yView.funderId)">
+              <td width="20%">
+                <span *ngIf="!yView.isDisplay"><i class="fa fa-plus-square"></i></span>
+                <span *ngIf="yView.isDisplay"><i class="fa fa-minus-square"></i></span>
+                &nbsp;
+                <b>{{yView.funder}}</b>
+              </td>
+              <td class="text-right" width="{{cellPercent}}%" *ngFor="let yr of envelopeYearsList">
+                {{formatNumber(calculateTotalsForYear(yr, yView.funderId))}}
+              </td>
+              <td width="{{cellPercent}}%" class="text-right"><b>{{formatNumber(calculateTotalsForFunder(yView.funderId))}}</b></td>
+            </tr>
+            <tr class="child" [hidden]="!yView.isDisplay" *ngFor="let breakup of yView.envelopeBreakupsByType">
+              <td width="20%">{{breakup.envelopeType}}</td>
+              <td width="{{cellPercent}}%" class="text-right" *ngFor="let yearly of breakup.yearlyBreakup">
+                {{formatNumber(yearly.amount)}}
+              </td>
+              <td width="{{cellPercent}}%" class="text-right"><b>{{formatNumber(calculateEnvelopeTypeTotal(yView.funderId, breakup.envelopeTypeId))}}</b></td>
+            </tr>
+          </table>
+        </div>
+
+        <div *ngIf="reportSettings && envelopeList && envelopeList.length > 0" class="col-md-12 margin-top-20 small">
+          <div class="text-center text-info">
+            Report link: <a class="text-info" href="{{reportSettings.reportUrl}}">{{reportSettings.reportUrl}}</a>
+          </div>
+          <div class="text-center margin-top-5">
+            <span><i>Generated on: {{getTodaysDate()}}</i></span>
+          </div>
+        </div>
+
+      </div>
+      
+    </div>
+  </block-ui>
+</div>
+
+<error-modal message={{errorMessage}}></error-modal>

@@ -3,10 +3,11 @@ import { SectorService } from '../services/sector.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoreService } from '../services/store-service';
 import { Messages } from '../config/messages';
-import { SectorTypeService } from '../services/sector-types.service';
-import { SectorCategoryService } from '../services/sector-category-service';
-import { SectorSubCategoryService } from '../services/sector-subcategory-service';
 import { SecurityHelperService } from '../services/security-helper.service';
+import { BlockUI, NgBlockUI } from 'ng-block-ui';
+import { ErrorModalComponent } from '../error-modal/error-modal.component';
+import { SectorTypeService } from '../services/sector-types.service';
+import { Settings } from '../config/settings';
 
 @Component({
   selector: 'app-manage-sector',
@@ -16,26 +17,30 @@ import { SecurityHelperService } from '../services/security-helper.service';
 export class ManageSectorComponent implements OnInit {
 
   @Input()
+  isLoading: boolean = true;
   isForEdit: boolean = false;
   isBtnDisabled: boolean = false;
+  isDvDisabled: boolean = true;
   sectorId: number = 0;
-  btnText: string = 'Add Sector';
+  btnText: string = 'Add sector';
+  sectorTabText: string = 'New sector';
   errorMessage: string = '';
+  allSectors: any = [];
   sectors: any = [];
   sectorTypes: any = [];
-  categories: any = [];
-  filteredCategories: any = [];
-  subCategories: any = [];
-  filteredSubCategories: any = [];
+  editableSectorTypes: any = [];
+  sectorChildren: any = [];
   requestNo: number = 0;
   isError: boolean = false;
-  model = { id: 0, sectorName: '', parentId: 0 };
+  model = { id: 0, sectorTypeId: 0, sectorName: null, parentId: 0 };
+  childModel = { childSectorId: null };
   permissions: any = {};
+  @BlockUI() blockUI: NgBlockUI;
 
   constructor(private sectorService: SectorService, private route: ActivatedRoute,
-    private router: Router, private sectorTypeService: SectorTypeService,
-    private categoryService: SectorCategoryService, private subcategoryService: SectorSubCategoryService,
-    private storeService: StoreService, private securityService: SecurityHelperService) {
+    private router: Router, private errorModal: ErrorModalComponent,
+    private storeService: StoreService, private securityService: SecurityHelperService,
+    private sectorTypeService: SectorTypeService) {
   }
 
   ngOnInit() {
@@ -43,20 +48,30 @@ export class ManageSectorComponent implements OnInit {
     if (!this.permissions.canEditSector) {
       this.router.navigateByUrl('sectors');
     }
-
-    this.getSectors();
+    this.storeService.newReportItem(Settings.dropDownMenus.management);
     if (this.route.snapshot.data && this.route.snapshot.data.isForEdit) {
       var id = this.route.snapshot.params["{id}"];
       if (id) {
-        this.btnText = 'Edit Sector';
+        this.model.id = id;
+      }
+    }
+    
+    this.getSectorTypes();
+    if (this.model.id != 0) {
+        this.btnText = 'Save Sector';
+        this.sectorTabText = 'Edit sector';
         this.isForEdit = true;
         this.sectorId = id;
-        this.loadSectorData();
-      } 
+        this.isDvDisabled = false;
+        setTimeout(() => {
+          this.loadSectorData();
+          this.getSectorChildren(id);
+        }, 1000);
+    } else {
+      this.isLoading = false;
     }
-    //this.getSectorTypes();
-    //this.getCategories();
-    //this.getSubCategories();
+
+    this.requestNo = this.storeService.getNewRequestNumber();
     this.storeService.currentRequestTrack.subscribe(model => {
       if (model && this.requestNo == model.requestNo && model.errorStatus != 200) {
         this.errorMessage = model.errorMessage;
@@ -68,27 +83,43 @@ export class ManageSectorComponent implements OnInit {
   getSectorTypes() {
     this.sectorTypeService.getSectorTypesList().subscribe(
       data => {
-        this.sectorTypes = data;
-      },
-      error => {
+        if (data) {
+          var sectorTypesList = data;
+          var sectorType = sectorTypesList.filter(s => s.isPrimary == true);
+          this.sectorTypes = sectorTypesList.filter(s => s.isPrimary == true || s.isSourceType == false);
+          this.editableSectorTypes = this.sectorTypes.map(t => t.id)
+          if (sectorType.length > 0) {
+            this.model.sectorTypeId = sectorType[0].id;
+            this.getSectors();
+          }
+        }
       }
-    )
-  }
-
-  getCategories() {
-    this.categoryService.getSectorCategoriesList().subscribe(
-      data => {
-        this.categories = data;
-      },
-      error => {
-      }
-    )
+    );
   }
 
   getSectors() {
     this.sectorService.getSectorsList().subscribe(
       data => {
-        this.sectors = data;
+        if (data) {
+          this.allSectors = data;
+          this.sectors = this.allSectors.filter(s => s.sectorTypeId == this.model.sectorTypeId && s.parentSector == null);
+        }
+      }
+    );
+  }
+
+  filterParentSectors() {
+    if (this.model.sectorTypeId > 0) {
+      this.sectors = this.allSectors.filter(s => s.sectorTypeId == this.model.sectorTypeId && s.parentSector == null);
+    }
+  }
+
+  getSectorChildren(id: string) {
+    this.sectorService.getSectorChildren(id).subscribe(
+      data => {
+        if (data) {
+          this.sectorChildren = data;
+        }
       },
       error => {
         console.log(error);
@@ -99,9 +130,19 @@ export class ManageSectorComponent implements OnInit {
   loadSectorData() {
     this.sectorService.getSector(this.sectorId.toString()).subscribe(
       data => {
-        this.model.id = data.id;
-        this.model.parentId = data.parentId;
-        this.model.sectorName = data.sectorName;
+        if (data) {
+          var sectorTypeId = data.sectorTypeId;
+          if (sectorTypeId) {
+            if (!this.editableSectorTypes.includes(sectorTypeId)) {
+              this.router.navigateByUrl('sectors');
+            }
+          }
+          this.model.id = data.id;
+          this.model.sectorTypeId = data.sectorTypeId;
+          this.model.parentId = data.parentId;
+          this.model.sectorName = data.sectorName;
+        }
+        this.isLoading = false;
       },
       error => {
         console.log("Request Failed: ", error);
@@ -109,37 +150,11 @@ export class ManageSectorComponent implements OnInit {
     );
   }
 
-  filterCategories(e) {
-    var id = e.target.value;
-    this.filteredCategories = this.categories.filter(function (category) {
-      return category.sectorTypeId == id;
-    });
-  }
-
-  getSubCategories() {
-    this.subcategoryService.getSectorSubCategoriesList().subscribe(
-      data => {
-        this.subCategories = data;
-        if (this.isForEdit) {
-          this.loadSectorData();
-        }
-      },
-      error => {
-      }
-    )
-  }
-
-  filterSubCategories(e) {
-    var categoryId = e.target.value;
-    this.filteredSubCategories = this.subCategories.filter(function (sCategory) {
-      return sCategory.categoryId == categoryId;
-    });
-  }
-
   saveSector() {
     var model = {
+      SectorTypeId: parseInt(this.model.sectorTypeId.toString()),
       SectorName: this.model.sectorName,
-      ParentId: this.model.parentId,
+      ParentId: parseInt(this.model.parentId.toString()),
     };
 
     this.isBtnDisabled = true;
@@ -180,6 +195,60 @@ export class ManageSectorComponent implements OnInit {
         }
       );
     }
+  }
+
+  saveChildSector() {
+    this.blockUI.start('Saving sector child...');
+    this.sectorService.setChild(this.model.id.toString(), this.childModel.childSectorId).subscribe(
+      data => {
+        if (data) {
+          var sector = this.sectors.filter(s => s.id == this.childModel.childSectorId);
+          if (sector && sector.length > 0) {
+            var newChild = {
+              id: sector[0].id,
+              sectorName: sector[0].sectorName
+            }
+            this.sectorChildren.push(newChild);
+          }
+        } else {
+          this.resetFormState();
+        }
+        this.blockUI.stop();
+      },
+      error => {
+        this.errorMessage = error;
+        this.errorModal.openModal();
+        this.resetFormState();
+        this.blockUI.stop();
+      }
+    );
+  }
+
+  removeChildSector(id) {
+    this.blockUI.start('Removing sector child...');
+    this.sectorService.removeChild(this.model.id.toString(), id).subscribe(
+      data => {
+        if (data) {
+          var sector = this.sectors.filter(s => s.id == id);
+          if (sector && sector.length > 0) {
+            var newChild = {
+              id: sector[0].id,
+              sectorName: sector[0].sectorName
+            }
+            this.sectorChildren = this.sectorChildren.filter(s => s.id != id);
+          }
+        } else {
+          this.resetFormState();
+        }
+        this.blockUI.stop();
+      },
+      error => {
+        this.errorMessage = error;
+        this.errorModal.openModal();
+        this.resetFormState();
+        this.blockUI.stop();
+      }
+    );
   }
 
   resetFormState() {

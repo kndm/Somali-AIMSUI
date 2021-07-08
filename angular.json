@@ -13,6 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "aot": true,
             "outputPath": "dist/aims-ui",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -28,10 +29,23 @@
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "crypto-js",
+              "jspdf",
+              "lodash",
+              "ngx-embed-video",
+              "chart.js"
+           ]
           },
           "configurations": {
             "production": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -126,5 +140,8 @@
       }
     }
   },
-  "defaultProject": "aims-ui"
+  "defaultProject": "aims-ui",
+  "cli": {
+    "analytics": "3e54cc7d-929b-4744-b786-908a4a2c01d1"
+  }
 }

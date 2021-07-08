@@ -1,0 +1,101 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a [ngClass]="{'btn-info': currentTab == tabConstants.BACKUP, 'text-info': currentTab != tabConstants.BACKUP}" href="#"
+              class="nav-link text-info" (click)="showBackupTab()" data-toggle="tab">Data backup</a>
+          </li>
+          <li class="nav-item">
+            <a [ngClass]="{'btn-info': currentTab == tabConstants.RESTORE, 'text-info': currentTab != tabConstants.RESTORE}" href="#"
+              class="nav-link text-info" (click)="showRestoreTab()" data-toggle="tab">Data restore</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-12 col-md-12 col-lg-12 mx-auto">
+        <div class="card card-signin my-5">
+          <div class="card-body">
+
+            <div *ngIf="currentTab == tabConstants.BACKUP" class="col-lg-12 col-md-12 col-sm-12">
+              <p class="lead">
+                Data backup allows you to take the complete backup of data as of its current state
+                on this date {{currentDate}}. It
+                must be noted that while taking the backup, AIMS will remain offline untill backup is
+                completed.
+              </p>
+              <span>
+                <button type="button" (click)="takeDataBackup()" class="btn btn-info btn-block text-uppercase">
+                  Take a backup
+                </button>
+              </span>
+            </div>
+
+            <div *ngIf="currentTab == tabConstants.RESTORE" class="col-lg-12 col-md-12 col-sm-12">
+              <h6>Backups list</h6>
+              <div class="row text-center" *ngIf="areFilesLoading">
+                <div class="col-md-12">
+                  <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading...</span>
+                </div>
+              </div>
+              <table *ngIf="backupFiles.length > 0 && !areFilesLoading" class="table table-striped small">
+                <thead>
+                  <tr>
+                    <th>Backup file name</th>
+                    <th class="text-center">Date and Time</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let file of backupFiles">
+                    <td>{{file.backupFileName}}</td>
+                    <td class="text-center">{{formatDate(file.takenOn)}}</td>
+                    <td class="text-center">
+                      <button type="button" title="Restore this backup to database" (click)="setRestoreRequest(file.id)" class="btn btn-warning text-uppercase btn-sm">Restore</button>
+                      <a title="Download backup file to store on some other media" href="{{setBackupFileUrl(file.downloadPath)}}" class="btn btn-info text-uppercase btn-sm margin-left-2">Download backup file</a>
+                      <button type="button" title="Delete backup" (click)="setDeleteRequest(file.id)" class="btn btn-danger text-uppercase btn-sm margin-left-2">Delete</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <span *ngIf="backupFiles.length == 0 && !areFilesLoading" class="text-info">
+                <i>No backup files found to show.</i>
+              </span>
+            </div>
+
+            <div *ngIf="currentTab == tabConstants.DELETE_CONFIRMATION" class="col-lg-12 col-md-12 col-sm-12">
+              <h6>Deleting database backup confirmation</h6>
+              <p class="lead">
+                Please confirm that you want to delete the database backup named as
+                ({{selectedBackupFileName}}) which was taken on ({{formatDate(backupTakenOn)}})? It must be noted that
+                this action cannot be undone.
+              </p>
+              <div>
+                <button class="btn btn-info text-uppercase small" (click)="deleteBackup()">Ok delete</button>
+                <button class="btn btn-danger text-uppercase margin-left-2 small" (click)="cancelDelete()">Cancel request</button>
+              </div>
+            </div>
+
+            <div *ngIf="currentTab == tabConstants.RESTORE_CONFIRMATION" class="col-lg-12 col-md-12 col-sm-12">
+              <h6>Restoring database confirmation</h6>
+              <p class="lead">
+                Please confirm that you want to restore the database status to the selected backup file
+                ({{selectedBackupFileName}}) which was taken on ({{formatDate(backupTakenOn)}})? It must be noted that
+                this action cannot be undone.
+              </p>
+              <div>
+                <button class="btn btn-info text-uppercase small" (click)="performRestore()">Ok restore</button>
+                <button class="btn btn-danger text-uppercase margin-left-2 small" (click)="cancelRequest()">Cancel request</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </block-ui>
+</div>
+
+<info-modal message={{infoMessage}}></info-modal>
+<error-modal message={{errorMessage}}></error-modal>

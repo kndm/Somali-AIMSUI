@@ -3,13 +3,14 @@
     <div class="col-md-12">
       <ul class="nav nav-tabs">
         <li class="nav-item">
-          <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/locations']">Locations List</a>
+          <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/locations']">Locations list</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active btn-info" data-toggle="tab">Create New</a>
+          <a class="nav-link active btn-info" data-toggle="tab">Create new</a>
         </li>
       </ul>
     </div>
+    
     <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
       <div class="card card-signin my-5">
         <div class="card-body">
@@ -19,32 +20,14 @@
           </div>
           <h5 class="card-title text-center">Location</h5>
 
-          <form class="form-signin" (ngSubmit)="saveLocation()" #locationForm="ngForm">
+          <form class="form-signin" (ngSubmit)="locationForm.form.valid && saveLocation()" #locationForm="ngForm">
 
             <div class="form-group">
-              <label for="location">Location Name</label>
+              <label for="location">Location name</label>
               <input type="text" class="form-control" id="location" [(ngModel)]="model.location" name="location"
                 #location="ngModel" required>
-              <div [hidden]="location.valid" class="alert alert-danger">
-                Location Name is required
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="latitude">Latitude</label>
-              <input type="number" class="form-control" id="latitude" [(ngModel)]="model.latitude" name="latitude"
-                #latitude="ngModel">
-              <div [hidden]="latitude.valid" class="alert alert-danger">
-                Enter valid value for latitude
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="longitude">Longitude</label>
-              <input type="number" class="form-control" id="longitude" [(ngModel)]="model.longitude" name="longitude"
-                #longitude="ngModel">
-              <div [hidden]="longitude.valid" class="alert alert-danger">
-                Enter valid value for longitude
+              <div *ngIf="locationForm.submitted" [hidden]="location.valid" class="alert alert-danger">
+                Location name is required
               </div>
             </div>
 

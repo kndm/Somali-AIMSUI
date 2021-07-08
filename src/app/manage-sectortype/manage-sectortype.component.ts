@@ -3,6 +3,9 @@ import { SectorTypeService } from '../services/sector-types.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoreService } from '../services/store-service';
 import { Messages } from '../config/messages';
+import { SecurityHelperService } from '../services/security-helper.service';
+import { SectorService } from '../services/sector.service';
+import { Settings } from '../config/settings';
 
 @Component({
   selector: 'app-manage-sectortype',
@@ -12,32 +15,42 @@ import { Messages } from '../config/messages';
 export class ManageSectortypeComponent implements OnInit {
 
   @Input()
+  sectorsList: any = [];
   isForEdit: boolean = false;
   isBtnDisabled: boolean = false;
-  orgId: number = 0;
-  btnText: string = 'Add Sector Type';
+  typeId: number = 0;
+  btnText: string = 'Add sector type';
   errorMessage: string = '';
   sectorTypeTypes: any = null;
   requestNo: number = 0;
   isError: boolean = false;
-  model = { id: 0, typeName: '' };
+  permissions: any = {};
+  model = { id: 0, typeName: '', sourceUrl: null, isPrimary: false, isSourceType: false };
 
   constructor(private sectorTypeService: SectorTypeService, private route: ActivatedRoute,
-    private router: Router,
+    private router: Router, private securityService: SecurityHelperService,
+    private sectorService: SectorService,
     private storeService: StoreService) {
   }
 
   ngOnInit() {
+    this.permissions = this.securityService.getUserPermissions();
+    if (!this.permissions.canEditSector) {
+      this.router.navigateByUrl('home');
+    }
+    this.storeService.newReportItem(Settings.dropDownMenus.management);
     if (this.route.snapshot.data && this.route.snapshot.data.isForEdit) {
       var id = this.route.snapshot.params["{id}"];
       if (id) {
-        this.btnText = 'Edit SectorType';
+        this.btnText = 'Edit sector type';
         this.isForEdit = true;
-        this.orgId = id;
+        this.typeId = id;
         this.sectorTypeService.getSectorType(id).subscribe(
           data => {
             this.model.id = data.id;
             this.model.typeName = data.typeName;
+            this.model.isPrimary = (data.isPrimary == null) ? false : data.isPrimary ;
+            this.model.isSourceType = (data.isSourceType == null) ? false : data.isSourceType;
           },
           error => {
             console.log("Request Failed: ", error);
@@ -54,24 +67,45 @@ export class ManageSectortypeComponent implements OnInit {
     });
   }
 
+  getSectorsForType(id: string) {
+    this.sectorService.getSectorsForType(id).subscribe(
+      data => {
+        this.sectorsList = data;
+      }
+    )
+  }
+
+  toggleDefault() {
+    this.model.isPrimary = (this.model.isPrimary) ? false : true;
+  }
+
+  toggleSourceType() {
+    this.model.isSourceType = (this.model.isSourceType) ? false : true;
+  }
+
   saveSectorType() {
     var model = {
       TypeName: this.model.typeName,
-      Id: this.model.id
+      Id: parseInt(this.model.id.toString()),
+      isPrimary: this.model.isPrimary,
+      isSourceType: this.model.isSourceType,
+      sourceUrl: this.model.sourceUrl
     };
 
     this.isBtnDisabled = true;
+    if (!model.isPrimary) {
+      model.isPrimary = false;
+    }
+
     if (this.isForEdit) {
       this.btnText = 'Updating...';
       this.sectorTypeService.updateSectorType(this.model.id, model).subscribe(
         data => {
-          if (!this.isError) {
-            var message = 'Sector Type' + Messages.RECORD_UPDATED;
-            this.storeService.newInfoMessage(message);
+          if (data) {
             this.router.navigateByUrl('sector-types');
           } else {
             this.resetFormState();
-          }
+          } 
         },
         error => {
           this.isError = true;
@@ -81,6 +115,7 @@ export class ManageSectortypeComponent implements OnInit {
       );
     } else {
       this.btnText = 'Saving...';
+      model.isSourceType = false;
       this.sectorTypeService.addSectorType(model).subscribe(
         data => {
           if (!this.isError) {

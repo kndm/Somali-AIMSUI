@@ -1,0 +1,87 @@
+<div class="container-fluid view-area">
+    <block-ui>
+        <div class="row">
+            <div class="col-md-12">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active btn-info" data-toggle="tab">Data export (Excel spreadsheet)</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="col-lg-12 col-md-12">
+                            <p class="lead text-center">
+                                Export projects list as an Excel spreadsheet to get all the data about projects.
+                            </p>
+                        </div>
+                        <form class="form-signin" (ngSubmit)="getAllProjectsReport()" #searchForm="ngForm">
+
+                            <div class="row margin-top-10">
+                                <div class="col-md-4">
+                                    <label>Starting year (optional): </label>&nbsp;&nbsp;
+                                    <select [class.disable]="isLoading" title="Starting year" class="form-control col-sm-12" name="startingYear"
+                                        [(ngModel)]="model.startingYear" #startingYear="ngModel" id="startingYear"
+                                        (change)="onChangeStartYear()"
+                                        >
+                                        <option value="0">--Starting year--</option>
+                                        <option *ngFor="let year of financialYears" value="{{year.financialYear}}">
+                                            {{year.label}}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Ending year (optional): </label>&nbsp;&nbsp;
+                                    <select [class.disable]="isLoading" title="Ending year" class="form-control col-sm-12"
+                                        name="endingYear" [(ngModel)]="model.endingYear"
+                                        #endingYear="ngModel" id="endingYear" (change)="onChangeEndYear()">
+                                        <option value="0">--Ending year--</option>
+                                        <option *ngFor="let year of financialYears" value="{{year.financialYear}}">
+                                            {{year.label}}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Organization (optional): </label>
+                                    <ng-multiselect-dropdown [placeholder]="'-- All organization/s --'" title="Organization/s"
+                                        [settings]="organizationsSettings"
+                                        [data]="organizationsList" [(ngModel)]="model.selectedOrganization" 
+                                        name="selectedOrganization" #selectedOrganization="ngModel">
+                                    </ng-multiselect-dropdown>
+                                </div>
+                            </div>
+                            <div class="row margin-top-10">
+                                <div class="col-md-6 col-lg-6 col-sm-6">
+                                    <div class="btn-group" data-toggle="buttons">
+                                        <button type="button" (click)="toggleCurrencyUsage()" class="btn btn-info btn-sm">
+                                          <i *ngIf="!model.useDefaultCurrency" class="fa fa-square"></i>
+                                          <i *ngIf="model.useDefaultCurrency" class="fa fa-check"></i>
+                                        </button>
+                                        &nbsp;Show amounts in {{defaultCurrency}}
+                                      </div>
+                                </div>
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="float-right">
+                                            <span *ngIf="excelFile" class="text-warning">
+                                                <i><b>Export generated successfully</b>&nbsp;&nbsp;</i>
+                                            </span>
+                                            <a *ngIf="excelFile" href="{{excelFile}}" class="btn btn-success">Download export as spreadsheet</a>&nbsp;
+                                            <button [class.disable]="isProcessing" type="submit" class="btn btn-info">
+                                                {{btnReportText}}
+                                            </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </block-ui>
+</div>
+
+<error-modal message={{errorMessage}}></error-modal>

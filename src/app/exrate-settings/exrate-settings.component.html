@@ -1,0 +1,187 @@
+<div class="container-fluid view-area">
+  <block-ui>
+
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a [ngClass]="{'btn-info': currentTab == 'exrates', 'text-info': currentTab != 'exrates'}" href="#"
+              class="nav-link text-info" (click)="showExRates()" data-toggle="tab">{{manualExRateLabel}}</a>
+          </li>
+          <li class="nav-item">
+            <a [ngClass]="{'btn-info': currentTab == 'open-exrates', 'text-info': currentTab != 'open-exrates'}"
+              href="#" class="nav-link text-info" (click)="showOpenExRates()" data-toggle="tab">Open exchange rates</a>
+          </li>
+          <li class="nav-item">
+            <a [ngClass]="{'btn-info': currentTab == 'label-setting', 'text-info': currentTab != 'label-setting'}"
+              href="#" class="nav-link text-info" (click)="showLabelSetting()" data-toggle="tab">Set label for manual
+              entry</a>
+          </li>
+          <!--<li class="nav-item">
+            <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/exchange-rate-usage']">Usage settings</a>
+          </li>-->
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div *ngIf="currentTab == 'exrates'" class="col-md-12 margin-top-10">
+        <div class="input-group">
+          <select name="searchYear" id="searchYear" class="form-control" (change)="filterExchangeRates()" [(ngModel)]="model.searchYear" #searchYear="ngModel">
+            <option value="null">--Year--</option>
+            <option *ngFor="let year of financialYearsList" value={{year.financialYear}}>{{year.financialYear}}</option>
+          </select>&nbsp;
+          <span class="input-group-btn">
+            <button title="Search" class="btn btn-outline-info" (click)="filterExchangeRates()" type="button">
+              <i class="fa fa-search"></i>
+            </button>&nbsp;
+            <button title="Show all" class="btn btn-outline-success" (click)="showAllManualRates()"
+              type="button">
+              <i class="fa fa-list"></i>
+            </button>
+          </span>
+        </div>
+
+        <div class="card card-signin my-5 margin-top-10">
+          <div class="card-body">
+              <div *ngIf="!defaultCurrency && !isLoading" class="alert alert-danger alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>Error!</strong> Please set the default and national currencies first before
+                you save the exchange rates.
+              </div>
+            <form class="form-inline" (ngSubmit)="saveRate(rateForm)" #rateForm="ngForm">
+              <div class="form-group mx-sm-3 mb-2">
+                <select name="currency" id="currency" title="Currency" class="form-control" [(ngModel)]="model.currency" 
+                #currency="ngModel" (change)="getExRateForSelectedCurrency()">
+                  <option value="null">--Currency--</option>
+                  <option *ngFor="let currency of currenciesList" value={{currency.currency}}>{{currency.currencyName}}</option>
+                </select>
+              </div>
+              <div class="form-group mb-2">
+                <input type="text" placeholder="Exchange rate" pattern="^\d*(\.\d{0,2})?$" class="form-control" id="exchangeRate"
+                  [(ngModel)]="model.exchangeRate" title="Manually entered/suggested exchange rate by system" name="exchangeRate" #exchangeRate="ngModel" maxlength="6">
+              </div>
+              <div class="form-group mx-sm-3 mb-2">
+                <select name="newYear" id="newYear" class="form-control" [(ngModel)]="model.newYear" 
+                #newYear="ngModel" (change)="onChangeYear()">
+                  <option value="null">--Year--</option>
+                  <option *ngFor="let year of financialYearsList" value={{year.financialYear}}>{{year.financialYear}}</option>
+                </select>
+              </div>
+              <button [class.disable]="!defaultCurrency" type="submit" class="btn btn-info mb-2 text-uppercase">Save new rate</button>
+              <span class="float-right margin-left-10">
+                {{manualExchangeRateSource}} for 1 {{defaultCurrency}} to <span class="text-warning" *ngIf="!model.currency">no currency selected</span> <span class="text-warning" *ngIf="model.currency">{{model.currency}}</span>
+              </span>
+            </form>
+            
+            <table *ngIf="filteredManualExchangeRates.length > 0" class="table table-bordered">
+              <tr>
+                <th>Ex. rate</th>
+                <th>Currency</th>
+                <th>Year</th>
+                <th>Action</th>
+              </tr>
+              <tr
+                *ngFor="let cur of filteredManualExchangeRates  | paginate: { itemsPerPage: pagingSize, currentPage: p }">
+                <td>{{cur.exchangeRate}}</td>
+                <td>{{cur.currency}}</td>
+                <td>{{cur.year}}</td>
+                <td>
+                  <button id="btndel-{{cur.id}}" (click)="deleteRate($event)" class="btn btn-danger">
+                    <i id="ibtndel-{{cur.id}}" class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="4">
+                  <pagination-controls (pageChange)="p=$event"></pagination-controls>
+                </td>
+              </tr>
+            </table>
+            <span *ngIf="filteredManualExchangeRates.length == 0 && !isLoading" class="float-left text-info">
+              <i>No exchange rates found.</i>
+            </span>
+          </div>
+        </div>
+
+        <div class="row text-center" *ngIf="isLoading">
+          <div class="col-md-12">
+            <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading rates...</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div *ngIf="currentTab == 'open-exrates'" class="col-sm-12 col-md-12 margin-top-10">
+        <!--API key settings-->
+        <div class="card card-signin margin-top-10 my-5">
+          <div class="card-body">
+            <form class="form-signin" (ngSubmit)="saveAPIKey()" #rateForm="ngForm">
+              <div class="form-group">
+                <label for="apiKey"><b>OpenExchangeRate API key</b></label>
+                <input type="text" class="form-control" id="apiKey" [(ngModel)]="model.apiKey" name="apiKey"
+                  #apiKey="ngModel" maxlength="50">
+                <div [hidden]="isAPIKeySet" class="alert alert-danger">
+                  API key is not set yet. Enter the key to set now.
+                </div>
+                <div [hidden]="!isAPIKeySet" class="alert alert-info">
+                  API key already set. Enter and save new, if you want to update.
+                </div>
+              </div>
+
+              <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">Save key</button>
+            </form>
+
+            <div *ngIf="!isLoading" class="margin-top-10 iati-box">
+              <h6 class="card-title text-center">Ex. Rates from (OpenExchangeRates) for 1 USD ({{exchangeRateDate}})
+              </h6>
+              <table *ngIf="exchangeRates.length > 0" class="table table-bordered">
+                <tr>
+                  <th>Currency</th>
+                  <th>Rate</th>
+                </tr>
+                <tr *ngFor="let cur of exchangeRates">
+                  <td>{{cur.currencyName}}</td>
+                  <td>
+                    {{cur.rate}}
+                  </td>
+                </tr>
+              </table>
+              <span *ngIf="exchangeRates.length == 0 && !isLoading" class="text-info">No currencies to show.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row text-center" *ngIf="isLoading">
+          <div class="col-md-12">
+            <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading currencies...</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="currentTab == 'label-setting'" class="col-sm-12 col-md-12 margin-top-10">
+        <div class="card card-signin margin-top-10 my-7 mx-auto">
+          <div class="card-body">
+            <form class="form-signin" (ngSubmit)="labelForm.form.valid && saveManualRatesLabel(labelForm)"
+              #labelForm="ngForm">
+              <div class="form-group">
+                <label for="exRateLabel"><b>Set label for manual entry exchange rate</b></label>
+                <input type="text" class="form-control" id="exRateLabel" [(ngModel)]="model.exRateLabel"
+                  name="exRateLabel" #exRateLabel="ngModel" maxlength="50">
+                <div *ngIf="labelForm.submitted" [hidden]="exRateLabel.valid" class="alert alert-danger">
+                  Label is required
+                </div>
+              </div>
+              <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">Save label</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </block-ui>
+</div>
+
+<info-modal message={{infoMessage}}></info-modal>
+<error-modal message={{errorMessage}}></error-modal>

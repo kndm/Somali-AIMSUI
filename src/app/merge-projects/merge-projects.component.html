@@ -1,0 +1,513 @@
+<div class="container-fluid view-area">
+  <block-ui>
+
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link text-info" data-toggle="tab" [routerLink]="['/new-project']">Source project selection</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Merge projects</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <form class="form-signin" (ngSubmit)="projectForm.form.valid && mergeAndSaveProject()" #projectForm="ngForm">
+      <div class="row">
+        <div class="col-md-12">
+          <span class="float-right margin-top-10">
+            <button class="btn btn-info"
+              [class.disable]="(!sectorPercentageOk || !locationPercentageOk || !financialsOk || !projectForm.form.valid)"
+              class="btn btn-info btn-lg text-uppercase" type="submit">Merge projects</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="row margin-bottom-0">
+
+        <!--Selected projects box-->
+        <div class="col-md-6 col-sm-12">
+          <div class="box margin-top-10">
+            <h6 class="card-title text-center">Selected AIMS projects</h6>
+            <div class="iati-box-small">
+              <table *ngFor="let project of selectedProjects" class="small margin-top-20">
+                <tr>
+                  <td colspan="2" width="100%">
+                    <b>Project title: <span class="text-info">{{project.title | truncate}} &nbsp;</span></b><button
+                      type="button" id="aimst-{{project.id}}" class="btn btn-outline-info btn-sm" (click)="enterTitle($event)">Title
+                      >></button>&nbsp;
+                    <a href="#" title="View Project Details" id="aproject-{{project.id}}"
+                      (click)="viewAIMSProject($event)" class="text-info">View
+                      Details</a><br />
+                  </td>
+                </tr>
+                <!--<tr>
+                  <td>
+                    <b>Starting year: </b>{{project.startingFinancialYear}}&nbsp;<button type="button" id="btnsdate-{{project.id}}"
+                      (click)="enterStartingYear($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                  <td>
+                    <b>Ending year: </b>{{project.endingFinancialYear}}&nbsp;<button type="button" id="btnedate-{{project.id}}"
+                      (click)="enterEndingYear($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                </tr>-->
+                <tr>
+                  <td>
+                    <b>Start date: </b>{{formatToLongDate(project.startDate)}}&nbsp;<button type="button" id="btnsdate-{{project.id}}"
+                      (click)="enterStartDate($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                  <td>
+                    <b>End date: </b>{{formatToLongDate(project.endDate)}}&nbsp;<button type="button" id="btnedate-{{project.id}}"
+                      (click)="enterEndDate($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>Project value:</b> {{project.projectValue}} &nbsp; <button type="button" id="btnpvalue-{{project.id}}"
+                      (click)="enterProjectValue($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                  <td>
+                    <b>Currency:</b> {{project.projectCurrency}} &nbsp; <button type="button" id="btnacurrency-{{project.id}}"
+                      (click)="enterProjectCurrency($event)" class="btn btn-sm btn-outline-success">>></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <b>Description: </b>{{project.description | truncate}} &nbsp;
+                    <button type="button" id="aimsd-{{project.id}}" class="btn btn-outline-warning btn-sm"
+                      (click)="enterProjectDescription($event)">Description
+                      >></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2">
+                    <hr />
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-sm-12">
+          <div class="box margin-top-10">
+            <h6 class="card-title text-center">Detail for new project after merge</h6>
+            <div class="form-group">
+              <input type="text" placeholder="Project title" title="Project title" class="form-control" id="title"
+                maxlength="1000" [(ngModel)]="model.title" name="title" #title="ngModel" required>
+              <div *ngIf="projectForm.submitted" [hidden]="title.valid" class="alert alert-danger">
+                Project title is required
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 col-lg-6">
+                <!--<div class="form-group">
+                  <select class="form-control" title="Starting financial year" name="startingFinancialYear"
+                    [(ngModel)]="model.startingFinancialYear" (change)="setDisbursementsData()"
+                    #startingFinancialYear="ngModel" required>
+                    <option value="null">--Starting year--</option>
+                    <option *ngFor="let year of financialYears" value="{{year.financialYear}}">{{year.financialYear}}
+                    </option>
+                  </select>
+                  <div *ngIf="projectForm.submitted" [hidden]="startingFinancialYear.valid" class="alert alert-danger">
+                    Starting year is required
+                  </div>
+                </div>-->
+                <div class="input-group mb-3">
+                  <input type="text" class="form-control col-sm-12" onfocus="(this.type='date')" onblur="(this.type='text')"
+                    name="startDate" placeholder="Project start date" [(ngModel)]="model.startDate" (change)="setDisbursementsData()"
+                    #startDate="ngModel" required />
+                </div>
+                <div *ngIf="projectForm.submitted" [hidden]="startDate.valid" class="alert alert-danger">
+                  Start date is required
+                </div>
+              </div>
+
+              <div class="col-md-6 col-lg-6">
+                <!--<div class="form-group">
+                  <select class="form-control" title="Ending financial year" name="endingFinancialYear"
+                    [(ngModel)]="model.endingFinancialYear" (change)="setDisbursementsData()"
+                    #endingFinancialYear="ngModel" required>
+                    <option value="null">--Ending year--</option>
+                    <option *ngFor="let year of financialYears" value="{{year.financialYear}}">{{year.financialYear}}
+                    </option>
+                  </select>
+                  <div *ngIf="projectForm.submitted" [hidden]="endingFinancialYear.valid" class="alert alert-danger">
+                    Ending year is required
+                  </div>
+                </div>-->
+                <div class="input-group mb-3">
+                  <input type="text" onfocus="(this.type='date')" onblur="(this.type='text')" (change)="setDisbursementsData()"
+                    class="form-control col-sm-12" name="endDate" placeholder="Project end date" [(ngModel)]="model.endDate"
+                    #endDate="ngModel" required />
+                </div>
+                <div *ngIf="projectForm.submitted" [hidden]="endDate.valid" class="alert alert-danger">
+                  End date is required
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-4 col-md-4">
+                <input type="number" title="Project value (0.00)" placeholder="Project value (0.00)"
+                  class="form-control" name="projectValue" (change)="calculateDisbursementsTotal()"
+                  [(ngModel)]="model.projectValue" #projectValue="ngModel" required />
+                <div *ngIf="projectForm.submitted" [hidden]="projectValue.valid" class="alert alert-danger">
+                  Project value is required
+                </div>
+              </div>
+
+              <div class="col-lg-4 col-md-4">
+                <select title="Project currency" class="form-control" name="currency"
+                  [(ngModel)]="model.projectCurrency" #currency="ngModel" (change)="getExchangeRateForCurrency()"
+                  required>
+                  <option value="null">--Currency--</option>
+                  <option *ngFor="let currency of currencies" value="{{currency.currency}}">{{currency.currencyName}}
+                  </option>
+                </select>
+                <div *ngIf="projectForm.submitted" [hidden]="currency.valid" class="alert alert-danger">
+                    Project currency is required
+                  </div>
+              </div>
+
+              <div class="col-lg-4 col-md-4">
+                <select title="Funding type" class="form-control" name="fundingType"
+                  [(ngModel)]="model.fundingTypeId" #fundingType="ngModel" required>
+                  <option value="null">--Funding type--</option>
+                  <option *ngFor="let fType of fundingTypes" value="{{fType.id}}">{{fType.fundingType}}
+                  </option>
+                </select>
+                <div *ngIf="projectForm.submitted" [hidden]="fundingType.valid" class="alert alert-danger">
+                    Funding type is required
+                  </div>
+              </div>
+
+            </div>
+            <div class="form-group margin-top-10">
+              <textarea title="Project description" placeholder="Project description" class="form-control" id="description"
+                [(ngModel)]="model.description" name="description" #description="ngModel" rows="7" maxlength="{{descriptionLimit}}"
+                required>
+              </textarea>
+              <div *ngIf="projectForm.submitted" [hidden]="description.valid" class="alert alert-danger">
+                Project value is required
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </form>
+
+    <div class="row margin-top-10">
+
+      <div class="col-lg-6 col-md-6">
+        <div class="box small">
+          <h6 class="card-title text-center">Disbursements from source projects</h6>
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <div><b>{{project.title}} - ({{project.projectCurrency}})</b></div>
+              <div *ngIf="project.disbursements.length > 0">
+                <table class="table">
+                  <tr>
+                    <th>Year</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                  </tr>
+
+                  <tr *ngFor="let disbursement of project.disbursements">
+                    <td>{{disbursement.year}}</td>
+                    <td>{{disbursement.amount}}</td>
+                    <td>{{disbursementTypeConstants[disbursement.disbursementType]}}</td>
+                    <td>
+                      <button title="Enter disbursement"
+                        (click)="enterDisbursement(project.id, disbursement.year, disbursement.disbursementType)"
+                        class="btn btn-success btn-sm">>></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.disbursements.length == 0">
+                No disbursements to show
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 col-md-6">
+        <div class="box">
+          <div class="box small">
+            <h6 class="card-title text-center">Project disbursements</h6>
+            <div class="iati-box-small">
+              <div *ngIf="!financialsOk" class="alert alert-danger">
+                Project disbursements must be equal to project value
+              </div>
+              <div *ngFor="let disbursement of projectDisbursements" class="form-group form-inline">
+                <label class="col-md-4">
+                  {{disbursement.year}}&nbsp;
+                  <span *ngIf="disbursement.disbursementType == 1">Actual</span>
+                  <span *ngIf="disbursement.disbursementType == 2">Planned</span>
+                </label>
+                <input type="text" pattern="^\d*(\.\d{0,2})?$" maxlength="11" (change)="calculateDisbursementsTotal()"
+                  name="{{disbursement.year}}-{{disbursement.disbursementType}}" [(ngModel)]="disbursement.amount"
+                  class="form-control col-md-8" id="d-{{disbursement.year}}-{{disbursement.disbursementType}}"
+                  required />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row margin-top-10">
+
+      <div class="col-lg-6 col-md-6">
+        <div class="box small">
+          <h6 class="card-title text-center">Funders from source projects</h6>
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <div><b>{{project.title}}</b></div>
+              <div *ngIf="project.funders.length > 0">
+                <table class="table table-condensed">
+                  <tr>
+                    <th width="90%">Funder name</th>
+                    <th width="10%">Action</th>
+                  </tr>
+                  <tr *ngFor="let funder of project.funders">
+                    <td width="80%">{{funder.funder}}</td>
+                    <td width="20%">
+                      <button class="btn btn-danger btn-sm" (click)="removeFunder(project.id, funder.funderId)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.funders.length == 0">
+                <span class="text-info"><i>No funders available</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 col-md-6">
+        <div class="box small">
+          <h6 class="card-title text-center">Implementers from source projects</h6>
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <div><b>{{project.title}}</b></div>
+              <div *ngIf="project.implementers.length > 0">
+                <table class="table table-condensed">
+                  <tr>
+                    <th width="90%">Implementer name</th>
+                    <th width="10%">Action</th>
+                  </tr>
+                  <tr *ngFor="let implementer of project.implementers">
+                    <td width="80%">{{implementer.implementer}}</td>
+                    <td width="20%">
+                      <button class="btn btn-danger btn-sm"
+                        (click)="removeImplementer(project.id, funder.implementerId)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.implementers.length == 0">
+                <span class="text-info"><i>No implementers available</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row margin-top-10">
+      <div class="col-lg-6 col-md-6">
+        <div class="box small">
+          <h6 class="card-title text-center">Sectors from source projects</h6>
+          <div *ngIf="!sectorPercentageOk" class="alert alert-danger">
+            Sector percentage must be equal to 100.
+          </div>
+
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <div><b>{{project.title}}</b></div>
+              <div *ngIf="project.sectors.length > 0">
+
+                <table class="table table-condensed">
+                  <tr>
+                    <th>Sector</th>
+                    <th>Percentage</th>
+                    <th>Action</th>
+                  </tr>
+                  <tr *ngFor="let sector of project.sectors; let i = index;">
+                    <td width="60%">{{sector.sector}}</td>
+                    <td width="30%">
+                      <input type="number" class="form-control" (change)="calculateSectorPercentage()"
+                        name="psector-{{project.id}}-{{sector.sectorId}}" [(ngModel)]="sector.fundsPercentage" />
+                    </td>
+                    <td width="10%">
+                      <button class="btn btn-danger btn-sm" (click)="removeSector(project.id, sector.sectorId)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.sectors.length == 0">
+                <span class="text-info"><i>No sectors available</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-6 col-md-6">
+        <div class="box small">
+          <h6 class="card-title text-center">Locations from source projects</h6>
+          <div *ngIf="!locationPercentageOk" class="alert alert-danger">
+            Location percentage must be equal to 100.
+          </div>
+
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <div><b>{{project.title}}</b></div>
+              <div *ngIf="project.locations.length > 0">
+
+                <table class="table table-condensed">
+                  <tr>
+                    <th width="80%">Location</th>
+                    <th width="10%">Percentage</th>
+                    <th width="10%">Action</th>
+                  </tr>
+                  <tr *ngFor="let location of project.locations; let i = index;">
+                    <td width="50%">{{location.location}}</td>
+                    <td width="30%">
+                      <input type="number" class="form-control" (change)="calculateLocationPercentage()"
+                        name="plocation-{{project.id}}-{{location.locationId}}"
+                        [(ngModel)]="location.fundsPercentage" />
+                    </td>
+                    <td width="20%">
+                      <button class="btn btn-danger btn-sm" (click)="removeLocation(project.id, location.locationId)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.locations.length == 0">
+                <span class="text-info"><i>No locations available</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row margin-top-10 small">
+
+      <div class="col-md-6 col-lg-6">
+        <div class="box">
+          <h6 class="card-title text-center">Documents/Resources from source projects</h6>
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <b>{{project.title}}</b>
+              <div *ngIf="project.documents.length > 0">
+                <table class="table table-condensed">
+                  <tr>
+                    <th width="40%">Resource name/Document</th>
+                    <th width="50%">Link</th>
+                    <th width="10%">Action</th>
+                  </tr>
+                  <tr *ngFor="let document of project.documents">
+                    <td>{{document.documentTitle}}</td>
+                    <td>{{document.documentUrl}}</td>
+                    <td>
+                      <button class="btn btn-danger btn-sm" (click)="removeDocument(project.id, document.id)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.documents.length == 0">
+                <span class="text-info"><i>No documents/resources found</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-6">
+        <div class="box">
+          <h6 class="card-title text-center">Markers from source projects</h6>
+
+          <div class="iati-box-small">
+            <div *ngFor="let project of selectedProjects">
+              <b>{{project.title}}</b>
+              <div *ngIf="project.markers.length > 0">
+                <table class="table table-condensed">
+                  <tr>
+                    <th width="40%">Marker</th>
+                    <th width="50%">Values</th>
+                    <th width="10%">Action</th>
+                  </tr>
+                  <tr *ngFor="let marker of project.markers">
+                    <td>{{marker.fieldTitle}}</td>
+                    <td>{{displayFieldValues(marker.values)}}</td>
+                    <td>
+                      <button class="btn btn-danger btn-sm" (click)="removeMarker(project.id, marker.markerId)"><i
+                          class="fa fa-trash"></i></button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div *ngIf="project.markers.length == 0">
+                <span class="text-info"><i>No markers found</i></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+    </div>
+
+  </block-ui>
+</div>
+
+<info-modal message={{infoMessage}}></info-modal>
+<error-modal message={{errorMessage}}></error-modal>
+
+<project-info-modal [project]="viewProject" [locations]="viewProjectLocations" [sectors]="viewProjectSectors"
+  [funders]="viewProjectFunders" [implementers]="viewProjectImplementers" [documents]="viewProjectDocuments">
+</project-info-modal>
+
+<projecti-info-modal [project]="viewProject" [locations]="viewProjectLocations" [sectors]="viewProjectSectors"
+  [funders]="viewProjectFunders" [implementers]="viewProjectImplementers" [documents]="viewProjectDocuments">
+</projecti-info-modal>
+
+
+<jw-modal id="confirmation-modal">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-info text-white">Confirmation Message</div>
+        <div class="card-body text-info">
+          Selected projects are merged successfully. If you want to edit the project, click edit,
+          or click finish to end the project.
+        </div>
+      </div><br />
+      <button class="btn btn-info" (click)="proceedToDataEntry();">Proceed and edit</button>
+      &nbsp;
+      <button class="btn btn-warning" (click)="closeConfirmationModal();">Finish</button>
+    </div>
+  </div>
+</jw-modal>

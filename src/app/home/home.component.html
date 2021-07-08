@@ -1,4 +1,5 @@
 <div class="container-fluid view-area">
+
   <div class="row text-center">
     <div *ngIf="showMessage" class="alert alert-info alert-dismissible">
       <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -6,113 +7,247 @@
     </div>
   </div>
 
+
   <div class="row">
 
-    <div class="col-lg-3 col-md-3 col-xs-6">
+    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-6">
       <div class="card bg-light">
         <div class="card-header">
-          <h6>User Accounts</h6>
+          <span class="float-left">
+            <h6>User accounts</h6>
+          </span>
         </div>
         <div class="card-body text-info">
           <div class="row">
-            <div class="col-xs-3 col-md-3">
-              <fa name="user" size="5x"></fa>
+            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+              <fa-icon [icon]="faUser" size="4x"></fa-icon>
             </div>
-            <div class="col-xs-9 col-md-9 text-right">
-              <div class="font-dashboard-menu-item">126</div>
-              <div>Registered Users</div>
+            <div class="col-xs-9 col-md-9 col-sm-9 col-xs-9 text-right">
+              <div class="font-dashboard-menu-item">{{usersCount}}</div>
+              <div>Registered users</div>
             </div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <div class="col text-center">
-            <a [routerLink]="['/user-registration']" class="btn btn-info">
-              <span class="pull-left">Register Now</span>
-            </a>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-3 col-md-3 col-xs-6">
+    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-6">
       <div class="card bg-light">
         <div class="card-header">
-          <h6>AIMS Projects</h6>
+          <h6>AIMS projects</h6>
         </div>
         <div class="card-body text-danger">
           <div class="row">
             <div class="col-xs-3 col-md-3">
-              <fa name="tasks" size="5x"></fa>
+              <fa-icon [icon]="faTasks" size="4x"></fa-icon>
             </div>
             <div class="col-xs-9 col-md-9 text-right">
-              <div class="font-dashboard-menu-item">1000</div>
-              <div>Recorded Projects</div>
+              <div class="font-dashboard-menu-item">{{projectsCount}}</div>
+              <div>Active projects</div>
             </div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <div class="col text-center">
-            <a [routerLink]="['/projects']" class="btn btn-danger">
-              <span class="pull-left">View Projects</span>
-            </a>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-3 col-md-3 col-xs-6">
+    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-6">
       <div class="card bg-light">
         <div class="card-header">
-          <h6>Partner Organizations</h6>
+          <h6>Organizations</h6>
         </div>
         <div class="card-body text-success">
           <div class="row">
             <div class="col-xs-3 col-md-3">
-              <fa name="building" size="5x"></fa>
+              <fa-icon [icon]="faBuilding" size="4x"></fa-icon>
             </div>
-            <div class="col-xs-9 col-md-9 text-right">
-              <div class="font-dashboard-menu-item">85</div>
-              <div>Organizations List</div>
+            <div class="col-xs-9 col-sm-9 col-md-9 text-right">
+              <div class="font-dashboard-menu-item">{{organizationsCount}}</div>
+              <div>Organizations</div>
             </div>
-          </div>
-        </div>
-        <div class="card-footer">
-          <div class="col text-center">
-            <a [routerLink]="['/organizations']" class="btn btn-success">
-              <span class="pull-left">View Information</span>
-            </a>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-lg-3 col-md-3 col-xs-6">
-        <div class="card bg-light">
-          <div class="card-header">
-            <h6>Reports</h6>
-          </div>
-          <div class="card-body text-primary">
-            <div class="row">
-              <div class="col-xs-3 col-md-3">
-                <fa name="file" size="5x"></fa>
-              </div>
-              <div class="col-xs-9 col-md-9 text-right">
-                <div class="font-dashboard-menu-item">15</div>
-                <div>Data Reports</div>
-              </div>
+    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-6">
+      <div class="card bg-light">
+        <div class="card-header">
+          <small>
+            <b>{{currentFinancialYear}} disbursements to date</b>
+          </small>
+        </div>
+        <div class="card-body text-primary">
+          <div class="row">
+            <div class="col-xs-3 col-md-3">
+              <fa-icon [icon]="faMoneyCheck" size="4x"></fa-icon>
+            </div>
+            <div class="col-xs-9 col-md-9 text-right">
+              <div class="font-dashboard-menu-item-small">{{formatNumberWithCommas(currentYearDisbursements)}}</div>
+              <div>{{defaultCurrency}}</div>
             </div>
           </div>
-          <div class="card-footer">
-            <div class="col text-center">
-              <a [routerLink]="['/project-report']" class="btn btn-primary">
-                <span class="pull-left">View Project Report</span>
-              </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row margin-top-20">
+    <div class="col-lg-8 col-md-8 col-sm-12">
+      <div class="card bg-light">
+        <div class="card-header">
+          <span class="float-left">
+            <h6>{{model.introductionHeading}}</h6>
+          </span>
+          <!--<span class="float-right">
+            <a href="https://drive.google.com/open?id=12M0hoxH7VLGx5aemxBsB9hdas1Ec8ugT" target="_Blank" class="btn btn-sm btn-info text-uppercase">
+              Frequently asked questions
+            </a>
+          </span>-->
+        </div>
+        <div class="card-body text-default">
+          <div class="row text-center" *ngIf="isIntroLoading">
+            <div class="col-md-12">
+              <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading introduction...</span>
+            </div>
+          </div>
+          <div *ngIf="!isIntroLoading" [innerHTML]="model.introductionText" class="text-justify">
+          </div>
+        </div>
+      </div>
+
+
+      <div class="card bg-light margin-top-10">
+        <div class="card-header">
+          <span class="float-left">
+            <h6>Recently updated projects</h6>
+          </span>
+        </div>
+        <div class="card-body bg-white padding-5">
+          <div class="row text-center" *ngIf="isProjectsLoading">
+            <div class="container">
+              <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading projects...</span>
+            </div>
+          </div>
+          <div class="container">
+            <table *ngIf="latestProjects.length > 0" class="table table-striped table-condensed small">
+              <thead>
+                <tr>
+                  <th width="60%">Project</th>
+                  <th width="20%" class="text-center">Project value ({{defaultCurrencyCode}})</th>
+                  <th width="10%" class="text-center">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let project of latestProjects">
+                  <td>{{project.title}}</td>
+                  <td class="text-center">{{project.projectCurrency}}
+                    {{formatNumberWithCommas(project.projectCost)}}
+                  </td>
+                  <td class="text-center">
+                    <button class="btn btn-warning btn-sm" (click)="viewProjectDetail(project.id)">View
+                      detail</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div *ngIf="latestProjects.length == 0 && !isProjectsLoading">
+              <span class="text-info"><i>No projects to show</i></span>
             </div>
           </div>
         </div>
       </div>
 
+        <div class="card bg-light margin-top-10">
+          <div class="card-header">
+            <span class="float-left">
+              <h6>Sponsors</h6>
+            </span>
+          </div>
+          <div class="card-body bg-white padding-5">
+            <div class="row text-center" *ngIf="isSponsorsLoading">
+              <div class="container">
+                <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading sponsors...</span>
+              </div>
+            </div>
+            <div class="container">
+              <ng-container *ngIf="sponsors.length > 0">
+                <div class="row">
+                  <div class="col-md-3 margin-top-20" *ngFor="let sponsor of sponsors">
+                    <img title="{{sponsor.title}}" src="{{sponsor.logoPath}}" />
+                  </div>
+                </div>
+              </ng-container>
+              
+              <div *ngIf="sponsors.length == 0 && !isSponsorsLoading">
+                <span class="text-info"><i>No sponsors to show</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+
+    </div>
+
+
+    <div class="col-lg-4 col-md-4 col-sm-12">
+      <div class="row">
+
+        <div class="col-md-12 col-lg-12 col-sm-12">
+          <div class="card bg-light">
+            <div class="card-header">
+              <span class="float-left">
+                <h6>Learn about AIMS</h6>
+              </span>
+            </div>
+            <div class="card-body bg-white padding-5">
+              <div class="row">
+                <div class="col-md-12" [innerHtml]="yt_video1_frame">
+                </div>
+                <div class="col-md-12 margin-top-10" [innerHtml]="yt_video2_frame">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12 col-lg-12 col-sm-12 margin-top-10">
+          <div class="card bg-light">
+            <div class="card-header">
+              <span class="float-left">
+                <h6>Important links</h6>
+              </span>
+            </div>
+            <div class="card-body bg-white padding-5">
+              <div class="row text-center" *ngIf="isLinkLoading">
+                <div class="container">
+                  <img src="assets/images/loader-md.gif" /><span>&nbsp;Loading links...</span>
+                </div>
+              </div>
+              <div class="container">
+                <table *ngIf="links.length > 0" class="table table-condensed small">
+                  <tbody>
+                    <tr *ngFor="let link of links">
+                      <td>
+                        <a href="{{link.url}}" target="_blank" class="text-info">
+                          {{link.title}}
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div *ngIf="links.length == 0 && !isLinkLoading">
+                  <span class="text-info"><i>No links to show</i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+        </div>
+        
+      </div>
+    </div>
+
   </div>
 
-  <div class="row margin-top-20">
-  </div>
+  

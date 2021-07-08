@@ -3,6 +3,8 @@ import { UserService } from '../services/user-service';
 import { InfoModalComponent } from '../info-modal/info-modal.component';
 import { ErrorModalComponent } from '../error-modal/error-modal.component';
 import { Messages } from '../config/messages';
+import { StoreService } from '../services/store-service';
+import { Settings } from '../config/settings';
 
 @Component({
   selector: 'forgot-password',
@@ -18,10 +20,15 @@ export class ForgotPasswordComponent{
   isError: boolean = false;
   errorMessage: string = '';
 
-  constructor(private userService: UserService, private infoModal: InfoModalComponent) {
+  constructor(private userService: UserService, private infoModal: InfoModalComponent,
+    private storeService: StoreService) {
   }
 
-  sendPasswordResetLink() {
+  ngOnInit() {
+    this.storeService.newReportItem(Settings.dropDownMenus.management);
+  }
+
+  sendPasswordResetLink(frm: any) {
     this.isError = false;
     this.isInfo = false;
     this.btnText = 'Checking and Resetting...';
@@ -32,10 +39,12 @@ export class ForgotPasswordComponent{
           this.infoMessage = Messages.PASSWORD_RESET_SENT;
           this.isInfo = true;
           this.resetFormStatus();
+          frm.resetForm();
         } else {
           this.errorMessage = Messages.EMAIL_NOT_FOUND;
           this.isError = true;
           this.resetFormStatus();
+          frm.resetForm();
         }
       },
       error => {

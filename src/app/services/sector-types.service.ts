@@ -28,6 +28,12 @@ export class SectorTypeService {
         catchError(this.storeService.handleError<any>('SectorTypes')));
     }
 
+    getDefaultSectorType() {
+      var url = this.urlHelper.getDefaultSectorTypeUrl();
+      return this.httpClient.get(url, httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Default SectorType')));
+    }
+
     getSectorType(id: string) {
       var url = this.urlHelper.getSingleSectorTypeUrl(id);
       return this.httpClient.get(url, httpOptions).pipe(
@@ -46,6 +52,13 @@ export class SectorTypeService {
         return this.httpClient.put(url,
             JSON.stringify(model), httpOptions).pipe(
                 catchError(this.storeService.handleError<any>('Update SectorType')));
+    }
+
+    deleteSectorType(id: string) {
+      var url = this.urlHelper.getSectorTypeUrl() + '/' + id;
+      return this.httpClient.delete(url, httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Sector type'))
+      );
     }
 
 }

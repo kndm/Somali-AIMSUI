@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Messages } from '../config/messages';
 import { StoreService } from '../services/store-service';
 import { IATIService } from '../services/iati.service';
+import { Settings } from '../config/settings';
+import { SecurityHelperService } from '../services/security-helper.service';
 
 @Component({
   selector: 'manage-organization',
@@ -13,41 +15,39 @@ import { IATIService } from '../services/iati.service';
 export class ManageOrganizationComponent implements OnInit {
   @Input()
   isForEdit: boolean = false;
+  permissions: any = {};
   isBtnDisabled: boolean = false;
   orgId: number = 0;
   btnText: string = 'Add Organization';
   errorMessage: string = '';
-  organizationTypes: any = null;
+  organizationTypes: any = [];
   requestNo: number = 0;
   isError: boolean = false;
   iatiOrganizations: any = [];
   filteredIATIOrganizations: any = [];
-  model = { id: 0, organizationName: '' };
+  model = { id: 0, organizationTypeId: null, organizationName: '' };
 
   constructor(private organizationService: OrganizationService, private route: ActivatedRoute,
-    private router: Router, 
-    private storeService: StoreService) {
+    private router: Router,
+    private storeService: StoreService,
+    private securityService: SecurityHelperService) {
   }
 
   ngOnInit() {
+    this.permissions = this.securityService.getUserPermissions();
+    if (!this.permissions.canEditOrganization) {
+      this.router.navigateByUrl('home');
+    }
     if (this.route.snapshot.data && this.route.snapshot.data.isForEdit) {
       var id = this.route.snapshot.params["{id}"];
       if (id) {
-        this.btnText = 'Edit Organization';
+        this.btnText = 'Edit organization';
         this.isForEdit = true;
         this.orgId = id;
-        this.organizationService.getOrganization(id).subscribe(
-          data => {
-            this.model.id = data.id;
-            this.model.organizationName = data.organizationName;
-            //this.model.organizationTypeId = data.organizationTypeId;
-          },
-          error => {
-            console.log("Request Failed: ", error);
-          }
-        );
+        this.getOrganizationTypes();
       }
     }
+    this.storeService.newReportItem(Settings.dropDownMenus.management);
 
     this.storeService.currentRequestTrack.subscribe(model => {
       if (model && this.requestNo == model.requestNo && model.errorStatus != 200) {
@@ -57,21 +57,33 @@ export class ManageOrganizationComponent implements OnInit {
     });
   }
 
-  fillOrganizationTypes() {
-    /*this.organizationService.getOrganizationTypes().subscribe(
+  getOrganizationData() {
+    if (this.orgId) {
+      this.organizationService.getOrganization(this.orgId.toString()).subscribe(
+        data => {
+          this.model.id = data.id;
+          this.model.organizationName = data.organizationName;
+          this.model.organizationTypeId = data.organizationTypeId;
+        }
+      );
+    }
+  }
+  
+  getOrganizationTypes() {
+    this.organizationService.getOrganizationTypes().subscribe(
       data => {
-        this.organizationTypes = data;
-      },
-      error => {
-        console.log("Request Failed: ", error);
+        if (data) {
+          this.organizationTypes = data;
+          this.getOrganizationData();
+        }
       }
-    );*/
+    );
   }
 
   saveOrganization() {
     var model = {
+      organizationTypeId: parseInt(this.model.organizationTypeId),
       Name: this.model.organizationName,
-      //TypeId: this.model.organizationTypeId
     };
 
     this.isBtnDisabled = true;
@@ -79,12 +91,14 @@ export class ManageOrganizationComponent implements OnInit {
       this.btnText = 'Updating...';
       this.organizationService.updateOrganization(this.model.id, model).subscribe(
         data => {
-          if (!this.isError) {
-            var message = 'Organization' + Messages.RECORD_UPDATED;
-            this.storeService.newInfoMessage(message);
-            this.router.navigateByUrl('organizations');
-          } else {
-            this.resetFormState();
+          if (data) {
+            if (!this.isError) {
+              var message = 'Organization' + Messages.RECORD_UPDATED;
+              this.storeService.newInfoMessage(message);
+              this.router.navigateByUrl('organizations');
+            } else {
+              this.resetFormState();
+            }
           }
         },
         error => {
@@ -97,12 +111,14 @@ export class ManageOrganizationComponent implements OnInit {
       this.btnText = 'Saving...';
       this.organizationService.addOrganization(model).subscribe(
         data => {
-          if (!this.isError) {
-            var message = 'New organization' + Messages.NEW_RECORD;
-            this.storeService.newInfoMessage(message);
-            this.router.navigateByUrl('organizations');
-          } else {
-            this.resetFormState();
+          if (data) {
+            if (!this.isError) {
+              var message = 'New organization' + Messages.NEW_RECORD;
+              this.storeService.newInfoMessage(message);
+              this.router.navigateByUrl('organizations');
+            } else {
+              this.resetFormState();
+            }
           }
         },
         error => {
@@ -117,9 +133,9 @@ export class ManageOrganizationComponent implements OnInit {
   resetFormState() {
     this.isBtnDisabled = false;
     if (this.isForEdit) {
-      this.btnText = 'Edit Organization';
+      this.btnText = 'Edit organization';
     } else {
-      this.btnText = 'Add Organization';
+      this.btnText = 'Add organization';
     }
   }
 

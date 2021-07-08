@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../services/user-service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { StoreService } from '../services/store-service';
 import { Messages } from '../config/messages';
 import { ModalService } from '../services/modal.service';
 import { SecurityHelperService } from '../services/security-helper.service';
+import { Settings } from '../config/settings';
+import { ErrorModalComponent } from '../error-modal/error-modal.component';
 
 @Component({
   selector: 'manage-account',
@@ -12,7 +14,7 @@ import { SecurityHelperService } from '../services/security-helper.service';
   styleUrls: ['./manage-account.component.css']
 })
 export class ManageAccountComponent implements OnInit {
-  model = { password: null };
+  model = { password: null, confirmPassword: null };
   dModel = { password: null };
   currentTab: string = 'password';
   btnPasswordText: string = 'Save New Password';
@@ -22,12 +24,26 @@ export class ManageAccountComponent implements OnInit {
   isError: boolean = false;
   infoMessage: string = '';
   errorMessage: string = '';
+  errorMessageForModal: string = '';
+  requestNo: number = 0;
 
   constructor(private userService: UserService, private router: Router,
     private storeService: StoreService, private modalService: ModalService,
-    private securityService: SecurityHelperService) { }
+    private securityService: SecurityHelperService, private route: ActivatedRoute) { }
 
   ngOnInit() {
+    if (!this.securityService.checkIsLoggedIn()) {
+      this.router.navigateByUrl('home');
+    }
+    this.storeService.newReportItem(Settings.dropDownMenus.management);
+    this.requestNo = this.storeService.getNewRequestNumber();
+    this.storeService.currentRequestTrack.subscribe(model => {
+      if (model && this.requestNo == model.requestNo && model.errorStatus != 200) {
+        this.errorMessageForModal = model.errorMessage;
+        this.isBtnDisabled = false;
+        this.modalService.open('error-message-modal');
+      }
+    });
   }
 
   showPasswordTab() {
@@ -41,18 +57,26 @@ export class ManageAccountComponent implements OnInit {
   }
 
   changePassword() {
+    if (this.model.password != this.model.confirmPassword) {
+      return false;
+    }
     this.isBtnDisabled = true;
-    this.btnPasswordText = 'Updating Password...';
+    this.btnPasswordText = 'Updating password...';
     this.userService.editUserPassword(this.model.password).subscribe(
       data => {
-        this.infoMessage = Messages.PASSWORD_UPDATED;
-        this.isInfo = true;
-        this.resetFormsState();
-      },
-      error => {
-        this.resetFormsState();
+        if (data) {
+          this.modalService.open('reset-info-modal');
+          this.btnPasswordText = 'Redirecting...';
+          this.securityService.clearLoginSession();
+
+          setTimeout(() => {
+            location.reload();
+          }, 3000);
+        } else {
+          this.resetFormsState();
+        }
       }
-    )
+    );
   }
 
   confirmDeleteAccount() {
@@ -62,20 +86,16 @@ export class ManageAccountComponent implements OnInit {
   deleteAccount() {
     this.modalService.close('confirmation-modal');
     this.isBtnDisabled = true;
-    this.btnAccountText = 'Deleting Account...';
+    this.btnAccountText = 'Deleting account...';
     this.userService.deleteUserAccount(this.dModel.password).subscribe(
       data => {
-
-        if (data.success) {
+        if (data) {
           this.storeService
             .newInfoMessage(Messages.ACCOUNT_DELETED);
           this.btnAccountText = 'Setting Environment...';
           this.securityService.clearLoginSession();
-
-          setTimeout(() => {
-            this.router.navigateByUrl('home');
-            location.reload();
-          }, 2000);
+          location.href += "?deleted=true";
+          location.reload();
         } else {
           this.errorMessage = data.message;
           this.isError = true;
@@ -91,6 +111,10 @@ export class ManageAccountComponent implements OnInit {
 
   closeModal() {
     this.modalService.close('confirmation-modal');
+  }
+
+  closeErrorModal() {
+    this.modalService.close('error-message-modal');
   }
 
   resetFormsState() {

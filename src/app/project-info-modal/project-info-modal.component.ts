@@ -1,5 +1,7 @@
 import { Component, OnInit, Input, Injectable } from '@angular/core';
 import { ModalService } from '../services/modal.service';
+import { StoreService } from '../services/store-service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'project-info-modal',
@@ -13,12 +15,9 @@ import { ModalService } from '../services/modal.service';
 export class ProjectInfoModalComponent implements OnInit {
 
   @Input()
-  project: any = {
-    title: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-  };
+  project: any = {};
+  @Input()
+  projectId: number = 0;
   @Input()
   sectors: any = [];
   @Input()
@@ -26,11 +25,23 @@ export class ProjectInfoModalComponent implements OnInit {
   @Input()
   funders: any = [];
   @Input()
+  disbursements: any = [];
+  @Input()
   implementers: any = [];
   @Input()
   documents: any = [];
+  @Input()
+  markers: any = [];
+  @Input()
+  isShowContact: boolean = false;
 
-  constructor(private modalService: ModalService) { }
+  disbursementTypeConstants: any = {
+    1: 'Actual',
+    2: 'Planned'
+  };
+
+  constructor(private modalService: ModalService, private storeService: StoreService,
+    private router: Router) { }
 
   ngOnInit() {
   }
@@ -41,6 +52,29 @@ export class ProjectInfoModalComponent implements OnInit {
 
   closeModal() {
     this.modalService.close('project-info-modal');
+  }
+
+  displayFieldValues(json: any) {
+    return this.storeService.parseAndDisplayJsonAsString(json);
+  }
+
+  getLongDateString(dated) {
+    return this.storeService.getLongDateString(dated);
+  }
+
+  contactProject() {
+    if (this.projectId != 0) {
+      this.router.navigateByUrl('contact-project/' + this.projectId);
+    }
+  }
+
+  formatDateUKStyle(dated: any) {
+    var validDate = Date.parse(dated);
+    if (isNaN(validDate)) {
+      return 'Invalid date';
+    }
+    var datesArr = dated.split('-');
+    return this.storeService.formatDateInUkStyle(parseInt(datesArr[0]), parseInt(datesArr[1]), parseInt(datesArr[2]));
   }
 
 }

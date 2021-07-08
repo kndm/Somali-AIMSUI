@@ -33,14 +33,25 @@ export class IATIService {
 
     getProjects() {
       var url = this.urlHelper.getIATIProjectsUrl();
-      return this.httpClient.get(url, httpOptions).pipe(
-        catchError(this.storeService.handleError<any>('IATI Projects')));
+      return this.httpClient.get(url, httpOptions);
     }
 
     getIATISettings() {
       var url = this.urlHelper.getIATISettingsUrl();
       return this.httpClient.get(url, httpOptions).pipe(
         catchError(this.storeService.handleError<any>('IATI Settings')));
+    }
+
+    getIATISettingsList() {
+      var url = this.urlHelper.getIATISettingsListUrl();
+      return this.httpClient.get(url, httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('IATI Settings')));
+    }
+
+    loadLatestIATI() {
+      var url = this.urlHelper.getLoadLatestIATIUrl();
+      return this.httpClient.get(url, httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('IATI Load')));
     }
 
     extractProjectsByIds(model: any) {
@@ -56,5 +67,20 @@ export class IATIService {
         JSON.stringify(model), httpOptions).pipe(
             catchError(this.storeService.handleError<any>('IATI Settings')));
     }
+
+    getIATICountries() {
+      var url = this.urlHelper.getCountriesUrl();
+      return this.httpClient.get(url, httpOptions).pipe(
+        catchError(this.storeService.handleError<any>('Countries'))
+      );
+    }
+
+    setActiveCountry(code: string) {
+      var url = this.urlHelper.setActiveCountryUrl(code);
+      return this.httpClient.post(url,
+        JSON.stringify(code), httpOptions).pipe(
+            catchError(this.storeService.handleError<any>('Setting Active Country')));
+    }
+
 
 }

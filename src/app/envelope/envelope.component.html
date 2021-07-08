@@ -1,0 +1,65 @@
+<div class="container-fluid view-area">
+  <block-ui>
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link active btn-info" data-toggle="tab">Envelope data</a>
+          </li>
+        </ul>
+      </div>
+
+      
+      <div class="col-sm-12 col-md-12 col-lg-12">
+        <div class="card card-signin my-5 margin-top-20">
+          <div class="card-body margin-top-0">
+
+            <form class="form-signin" (ngSubmit)="envelopeForm.form.valid && saveEnvelopeData()"
+              #envelopeForm="ngForm">
+              <div class="form-group form-inline col-md-12 col-lg-12">
+                <label>Currency &nbsp;&nbsp;</label>
+                <select class="form-control" name="currency" [(ngModel)]="model.currency" (change)="getExchangeRateForCurrency()" #currency="ngModel">
+                  <option value="null">--Currency--</option>
+                  <option *ngFor="let currency of currenciesList" [value]="currency.currency">{{currency.currencyName}}</option>
+                </select>&nbsp;
+          
+              </div>
+              <div class="col-md-12">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Envelope type</th>
+                      <th class="text-center" *ngFor="let year of yearsList">
+                        {{year.label}}&nbsp;
+                        <span tooltip="{{getFinancialYearLabel(year.financialYear)}}" [options]="tooltipOptions">
+                          <button class="btn btn-info" type="button"><i class="fa fa-question-circle"></i></button>
+                        </span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let envelope of envelopeData.envelopeBreakupsByType">
+                      <td>{{envelope.envelopeType}}</td>
+                      <td *ngFor="let yr of envelope.yearlyBreakup;let i = index">
+                        <input type="number" name="{{envelope.envelopeTypeId}}-{{i}}" min="1" max="99999999999" (keyup)="preventInput($event)"  class="form-control" [(ngModel)]="yr.amount" required />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><b>Total</b></td>
+                      <td class="text-center" *ngFor="let year of yearsList">
+                        <b>{{formatNumber(yearlyTotals[year.financialYear])}}</b>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <button class="btn btn-lg btn-info btn-block text-uppercase" type="submit">{{btnText}}</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </block-ui>
+</div>
+
+<error-modal message="{{errorMessage}}"></error-modal>
